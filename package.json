@@ -1,0 +1,29 @@
+{
+  "name": "jogo-do-bixo",
+  "private": true,
+  "version": "0.0.1",
+  "description": "Jogo do Bixo feito para a disciplina de Programação Web",
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "concurrently \"npm:dev:backend\" \"npm:dev:frontend\"",
+    "build": "npm run build --workspaces",
+    "dev:frontend": "npm run dev --workspace=packages/frontend",
+    "dev:backend": "npm run dev --workspace=packages/backend",
+    "build:frontend": "npm run build --workspace=packages/frontend",
+    "build:schema": "npm run build -w @jogo-do-bixo/schema",
+    "build:backend": "npm run build --workspace=packages/backend",
+    "format": "npx @biomejs/biome format --write .",
+    "lint": "npx @biomejs/biome lint .",
+    "check": "npx @biomejs/biome check .",
+    "db:create": "cd packages/backend && npx drizzle-kit push"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.3.5",
+    "@types/node": "^24.10.1",
+    "concurrently": "^8.2.2",
+    "tsx": "^4.20.6",
+    "typescript": "^5.9.3"
+  }
+}
