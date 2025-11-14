@@ -10,17 +10,21 @@
   },
   "dependencies": {
     "@elysiajs/cors": "^1.4.0",
+    "@elysiajs/jwt": "^1.4.0",
     "@elysiajs/node": "^1.4.2",
     "@elysiajs/openapi": "^1.4.11",
     "@jogo-do-bixo/schema": "^1.0.0",
+    "bcrypt": "^6.0.0",
     "better-sqlite3": "^12.4.1",
     "chalk": "^4.1.2",
     "drizzle-orm": "^0.44.7",
     "elysia": "^1.4.15",
     "pino": "^10.1.0",
-    "pino-pretty": "^13.1.2"
+    "pino-pretty": "^13.1.2",
+    "uuidv7": "^1.0.2"
   },
   "devDependencies": {
+    "@types/bcrypt": "^6.0.0",
     "@types/better-sqlite3": "^7.6.13",
     "drizzle-kit": "^0.31.6"
   }

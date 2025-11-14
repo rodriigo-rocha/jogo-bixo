@@ -1,26 +1,59 @@
-import { UserSchema } from "@jogo-do-bixo/schema";
-import { Elysia } from "elysia";
+import { Elysia, t } from "elysia";
+import { authPlugin } from "../../plugins/auth";
 import { dbPlugin } from "../../plugins/db";
 import { loggerPlugin } from "../../plugins/logger";
 import { UserService } from "./users.service";
 
-export const userRoutes = new Elysia({ prefix: "/users", tags: ["User"] })
+export const userRoutes = new Elysia({
+  prefix: "/users",
+  tags: ["Users"],
+})
   .use(loggerPlugin)
   .use(dbPlugin)
-  .derive(({ db, logger }) => ({
-    userService: new UserService(logger, db),
-  }))
-  .get("/:id", async ({ params, userService, status }) => {
-    return (await userService.findById(params.id)) ?? status(404);
+  .use(authPlugin)
+  .derive(({ db }) => {
+    const userService = new UserService(db);
+
+    return {
+      userService,
+    };
   })
-  .post(
-    "/",
-    async ({ body, set, userService }) => {
-      const newUser = await userService.create(body);
-      set.status = 201;
-      return newUser;
+  .get(
+    "/me",
+    async ({ user, userService }) => {
+      const dbUser = await userService.findById(user!.id);
+
+      return {
+        id: dbUser!.id,
+        username: dbUser!.username,
+        avatar: dbUser!.pfp,
+        email: dbUser!.email,
+      };
     },
     {
-      body: UserSchema,
+      verifyAuth: true,
+      detail: {
+        description: "Retorna informações sobre o usuário atual",
+        responses: {
+          "200": {
+            description: "Sucesso",
+            content: {
+              "application/json": {
+                schema: t.Object({
+                  id: t.String(),
+                  username: t.String(),
+                  avatar: t.String(),
+                  email: t.String(),
+                }),
+              },
+            },
+          },
+
+          "401": {
+            description: "Token inválido ou não fornecido",
+          },
+        },
+        security: [{ bearerAuth: [] }],
+      },
     },
   );

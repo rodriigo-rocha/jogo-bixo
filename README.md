@@ -7,6 +7,8 @@ O projeto utiliza uma arquitetura modular baseada em features (Feature-Based Arc
 
 Essa estrutura é muito parecida com o padrão MVC.
 
+As documentação das rotas está disponível na rota `/openapi`.
+
 ## Estrutura
 ```
 /jogo-bixo
