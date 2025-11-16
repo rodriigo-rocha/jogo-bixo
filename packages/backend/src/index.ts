@@ -5,6 +5,9 @@ import { z } from "@jogo-do-bixo/schema";
 import { Elysia, t } from "elysia";
 import { BaseHttpError } from "./error";
 import { authRoutes } from "./features/auth/auth.route";
+import { betsRoutes } from "./features/bets/bets.route";
+import { drawRoutes } from "./features/draws/draw.route";
+import { performanceRoutes } from "./features/performance/performance.route";
 import { userRoutes } from "./features/users/users.route";
 import { dbPlugin } from "./plugins/db";
 import { loggerPlugin } from "./plugins/logger";
@@ -77,6 +80,9 @@ app
 app
   .use(userRoutes)
   .use(authRoutes)
+  .use(betsRoutes)
+  .use(drawRoutes)
+  .use(performanceRoutes)
   .get(
     "/",
     () => ({
