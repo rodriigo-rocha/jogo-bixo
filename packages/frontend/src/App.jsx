@@ -1,5 +1,5 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import TelaLogin from './Pages/TelaLogin';
+import TelaLogin from './pages/TelaLogin';
 import Dashboard from './pages/Dashboard';
 
 
