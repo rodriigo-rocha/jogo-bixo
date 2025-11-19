@@ -158,4 +158,77 @@ export class BetsService {
       .delete(bets)
       .where(and(eq(bets.id, betId), eq(bets.userId, userId)));
   }
+
+  async updateBet(betId: number, userId: string, data: {
+    drawId?: number;
+    betor?: string;
+    animal?: string;
+    betType?: string;
+    value?: number;
+    number?: number;
+  }) {
+    const result = await this.db
+      .update(bets)
+      .set(data)
+      .where(and(eq(bets.id, betId), eq(bets.userId, userId)))
+      .returning();
+
+    if (result.length === 0) {
+      throw new Error("Aposta não encontrada ou não autorizada");
+    }
+
+    // Retornar a aposta atualizada com relacionamentos
+    const updatedBet = result[0];
+    const betWithRelations = await this.db
+      .select({
+        id: bets.id,
+        userId: bets.userId,
+        drawId: bets.drawId,
+        betor: bets.betor,
+        animal: bets.animal,
+        betType: bets.betType,
+        value: bets.value,
+        number: bets.number,
+        createdAt: bets.createdAt,
+
+        // Dados do usuário
+        userId_rel: users.id,
+        username: users.username,
+        email: users.email,
+
+        // Dados do sorteio
+        drawId_rel: draws.id,
+        drawIdentifier: draws.identifier,
+        drawStatus: draws.status,
+      })
+      .from(bets)
+      .leftJoin(users, eq(bets.userId, users.id))
+      .leftJoin(draws, eq(bets.drawId, draws.id))
+      .where(eq(bets.id, updatedBet.id))
+      .limit(1);
+
+    const formattedBet = betWithRelations.map(row => ({
+      id: row.id,
+      userId: row.userId,
+      drawId: row.drawId,
+      betor: row.betor,
+      animal: row.animal,
+      betType: row.betType,
+      value: row.value,
+      number: row.number,
+      createdAt: row.createdAt,
+      user: row.userId_rel ? {
+        id: row.userId_rel,
+        username: row.username,
+        email: row.email,
+      } : null,
+      draw: row.drawId_rel ? {
+        id: row.drawId_rel,
+        identifier: row.drawIdentifier,
+        status: row.drawStatus,
+      } : null,
+    }))[0];
+
+    return formattedBet;
+  }
 }

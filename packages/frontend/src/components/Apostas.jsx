@@ -12,6 +12,7 @@ function Apostas(){
     const [valor, setValor] = useState("");
     const [numero, setNumero] = useState("");
     const [apostador, setApostador] = useState("");
+    const [editingBetId, setEditingBetId] = useState(null);
 
     async function fetchDraws() {
         if (!token) return
@@ -73,35 +74,72 @@ function Apostas(){
             return;
         }
         try {
-            const response = await fetch("http://localhost:3000/bets", {
-                method: "POST",
-                headers: { 
-                    "Content-Type": "application/json",
-                    Authorization: `Bearer ${token}`,
-                },
-                body: JSON.stringify({
-                    userId: user.id,
-                    drawId: parseInt(selectedDraw),
-                    betor: apostador,
-                    animal,
-                    betType: tipoAposta,
-                    value: parseFloat(valor),
-                    number: tipoAposta !== "grupo" ? parseInt(numero) : undefined,
-                }),
-            });
+            const betData = {
+                userId: user.id,
+                drawId: parseInt(selectedDraw),
+                betor: apostador,
+                animal,
+                betType: tipoAposta,
+                value: parseFloat(valor),
+                number: tipoAposta !== "grupo" ? parseInt(numero) : undefined,
+            };
+
+            let response;
+            if (editingBetId) {
+                // Editar aposta existente
+                response = await fetch(`http://localhost:3000/bets/${editingBetId}`, {
+                    method: "PUT",
+                    headers: { 
+                        "Content-Type": "application/json",
+                        Authorization: `Bearer ${token}`,
+                    },
+                    body: JSON.stringify({
+                        drawId: parseInt(selectedDraw),
+                        betor: apostador,
+                        animal,
+                        betType: tipoAposta,
+                        value: parseFloat(valor),
+                        number: tipoAposta !== "grupo" ? parseInt(numero) : undefined,
+                    }),
+                });
+            } else {
+                // Criar nova aposta
+                response = await fetch("http://localhost:3000/bets", {
+                    method: "POST",
+                    headers: { 
+                        "Content-Type": "application/json",
+                        Authorization: `Bearer ${token}`,
+                    },
+                    body: JSON.stringify(betData),
+                });
+            }
+
             if (response.ok) {
-                const novaAposta = await response.json();
-                setApostas((apostasAtuais) => [...apostasAtuais, novaAposta]); 
+                const updatedBet = await response.json();
+                if (editingBetId) {
+                    // Atualizar a aposta na lista
+                    setApostas((apostasAtuais) =>
+                        apostasAtuais.map((aposta) =>
+                            aposta.id === editingBetId ? updatedBet : aposta
+                        )
+                    );
+                    alert("Aposta atualizada com sucesso!");
+                } else {
+                    // Adicionar nova aposta
+                    setApostas((apostasAtuais) => [...apostasAtuais, updatedBet]); 
+                    alert("Aposta registrada com sucesso!");
+                }
+                // Limpar campos e sair do modo edição
                 setValor("");
                 setNumero("");
                 setApostador("");
-                alert("Aposta registrada com sucesso!");
+                setEditingBetId(null);
             } else {
                 const errorData = await response.json();
-                alert(`Erro ao registrar aposta: ${errorData.message}`);
+                alert(`Erro ao ${editingBetId ? 'atualizar' : 'registrar'} aposta: ${errorData.message}`);
             }
         } catch (error) {
-            console.error("Erro de rede ao registrar aposta:", error);
+            console.error(`Erro de rede ao ${editingBetId ? 'atualizar' : 'registrar'} aposta:`, error);
             alert("Ocorreu um erro de rede. O backend está rodando?");
         }
     }
@@ -137,6 +175,16 @@ function Apostas(){
             console.error("Erro de rede ao excluir aposta:", error);
             alert("Ocorreu um erro de rede ao excluir aposta.");
         }
+    }
+
+    function editarAposta(aposta) {
+        setEditingBetId(aposta.id);
+        setSelectedDraw(aposta.drawId.toString());
+        setApostador(aposta.betor || "");
+        setAnimal(aposta.animal);
+        setTipoAposta(aposta.betType);
+        setValor(aposta.value.toString());
+        setNumero(aposta.number ? aposta.number.toString() : "");
     }
 
     return(
@@ -182,7 +230,12 @@ function Apostas(){
                     </select>
                     <label>Valor da Aposta</label>
                     <input placeholder="R$0,00" type="Number" value={valor} onChange={(e) => setValor(e.target.value)} className="w-[70%] bg-white shadow-gray-300 shadow-inner px-2 border border-gray-600 mb-3"/>
-                    <button type="button" onClick={registrarAposta} className="bg-blue-950 text-white w-25 cursor-pointer hover:bg-blue-900 active:bg-blue-800 active:text-indigo-100">Registrar</button>
+                    <div className="flex gap-2">
+                        <button type="button" onClick={registrarAposta} className="bg-blue-950 text-white w-25 cursor-pointer hover:bg-blue-900 active:bg-blue-800 active:text-indigo-100">{editingBetId ? "Atualizar" : "Registrar"}</button>
+                        {editingBetId && (
+                            <button type="button" onClick={() => { setEditingBetId(null); setValor(""); setNumero(""); setApostador(""); }} className="bg-gray-500 text-white w-25 cursor-pointer hover:bg-gray-400 active:bg-gray-300">Cancelar</button>
+                        )}
+                    </div>
                 </div>
             </div>
             <div className="pb-4 bg-blue-200 lg:w-[55%] text-start border-4 border-gray-400 shadow-lg shadow-gray-400/70">
@@ -212,13 +265,22 @@ function Apostas(){
                                         <p><b>Valor:</b> R$ {parseFloat(aposta.value).toFixed(2)}</p>
                                         {aposta.number != null && <p><b>Número:</b> {aposta.number}</p>}
                                     </div>
-                                    <button
-                                        type="button"
-                                        onClick={() => deletarAposta(aposta.id)}
-                                        className="bg-red-600 text-white px-2 py-1 rounded hover:bg-red-500"
-                                    >
-                                        Excluir
-                                    </button>
+                                    <div className="flex gap-2">
+                                        <button
+                                            type="button"
+                                            onClick={() => editarAposta(aposta)}
+                                            className="bg-green-600 text-white px-2 py-1 rounded hover:bg-green-500"
+                                        >
+                                            Editar
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => deletarAposta(aposta.id)}
+                                            className="bg-red-600 text-white px-2 py-1 rounded hover:bg-red-500"
+                                        >
+                                            Excluir
+                                        </button>
+                                    </div>
                                 </div>
                             ));
                         })()}

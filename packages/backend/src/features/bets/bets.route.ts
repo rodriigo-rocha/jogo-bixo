@@ -32,6 +32,29 @@ export const betsRoutes = new Elysia({ prefix: "/bets" })
       }),
     },
   )
+  .put(
+    "/:id",
+    async ({ params, body, user, betsService }) => {
+      if (!user) {
+        throw new UnauthorizedError("Usuário não encontrado na requisição");
+      }
+      const betId = Number(params.id);
+      if (isNaN(betId)) {
+        throw new Error("ID da aposta inválido");
+      }
+      return betsService.updateBet(betId, user.id, body);
+    },
+    {
+      body: t.Object({
+        drawId: t.Optional(t.Number()),
+        betor: t.Optional(t.String()),
+        animal: t.Optional(t.String()),
+        betType: t.Optional(t.String()),
+        value: t.Optional(t.Numeric()),
+        number: t.Optional(t.Numeric()),
+      }),
+    },
+  )
   .get("/draw/:drawId", async ({ params, betsService }) => {
     const drawId = Number(params.drawId);
     if (isNaN(drawId)) {
