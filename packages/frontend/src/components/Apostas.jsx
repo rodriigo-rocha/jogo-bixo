@@ -1,192 +1,20 @@
-import { useState, useEffect } from "react";
-import { useAuth } from "../context/AuthContext";
+import { useState } from "react";
 
-function Apostas(){
-    const { user, token } = useAuth(); // Pega o usuário do contexto
-    const [apostas, setApostas] = useState([]);
-    const [draws, setDraws] = useState([]);
-    const [selectedDraw, setSelectedDraw] = useState("");
-    const [selectedFilterDraw, setSelectedFilterDraw] = useState("");
-    const [animal, setAnimal] = useState("1");
-    const [tipoAposta, setTipoAposta] = useState("grupo");
-    const [valor, setValor] = useState("");
-    const [numero, setNumero] = useState("");
-    const [apostador, setApostador] = useState("");
-    const [editingBetId, setEditingBetId] = useState(null);
-
-    async function fetchDraws() {
-        if (!token) return
-        try {
-            const response = await fetch("http://localhost:3000/draws", {
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                },
-            })
-            if (response.ok) {
-                const data = await response.json()
-                setDraws(data)
-                const openDraw = data.find(d => d.status === "open")
-                if (openDraw) {
-                    setSelectedDraw(openDraw.id.toString())
-                }
-            } else {
-                console.error("Falha ao buscar sorteios")
-            }
-        } catch (error) {
-            console.error("Erro de rede ao buscar sorteios:", error)
-        }
-    }
-
-    async function fetchApostas() {
-    if (!user || !token) return; // Não faz nada se não houver usuário ou token
-    try {
-      const response = await fetch(`http://localhost:3000/bets/${user.id}`, {
-        headers: {
-          // ADICIONANDO O HEADER DE AUTORIZAÇÃO
-          Authorization: `Bearer ${token}`,
-        },
-      });
-      if (response.ok) {
-                const data = await response.json();
-                setApostas(data);
-            } else {
-                console.error("Falha ao buscar apostas");
-            }
-        } catch (error) {
-            console.error("Erro de rede ao buscar apostas:", error);
-        }
-    }
-
-    useEffect(() => {
-        if (user && token) { // Garante que ambos existam antes de buscar
-            fetchDraws();
-            fetchApostas();
-        }
-    }, [user, token]); // Adiciona 'token' como dependência
-
-    async function registrarAposta() {
-        if (!user) {
-            alert("Você precisa estar logado para fazer uma aposta.");
-            return;
-        }
-        if (!selectedDraw) {
-            alert("Selecione um sorteio primeiro.");
-            return;
-        }
-        try {
-            const betData = {
-                userId: user.id,
-                drawId: parseInt(selectedDraw),
-                betor: apostador,
-                animal,
-                betType: tipoAposta,
-                value: parseFloat(valor),
-                number: tipoAposta !== "grupo" ? parseInt(numero) : undefined,
-            };
-
-            let response;
-            if (editingBetId) {
-                // Editar aposta existente
-                response = await fetch(`http://localhost:3000/bets/${editingBetId}`, {
-                    method: "PUT",
-                    headers: { 
-                        "Content-Type": "application/json",
-                        Authorization: `Bearer ${token}`,
-                    },
-                    body: JSON.stringify({
-                        drawId: parseInt(selectedDraw),
-                        betor: apostador,
-                        animal,
-                        betType: tipoAposta,
-                        value: parseFloat(valor),
-                        number: tipoAposta !== "grupo" ? parseInt(numero) : undefined,
-                    }),
-                });
-            } else {
-                // Criar nova aposta
-                response = await fetch("http://localhost:3000/bets", {
-                    method: "POST",
-                    headers: { 
-                        "Content-Type": "application/json",
-                        Authorization: `Bearer ${token}`,
-                    },
-                    body: JSON.stringify(betData),
-                });
-            }
-
-            if (response.ok) {
-                const updatedBet = await response.json();
-                if (editingBetId) {
-                    // Atualizar a aposta na lista
-                    setApostas((apostasAtuais) =>
-                        apostasAtuais.map((aposta) =>
-                            aposta.id === editingBetId ? updatedBet : aposta
-                        )
-                    );
-                    alert("Aposta atualizada com sucesso!");
-                } else {
-                    // Adicionar nova aposta
-                    setApostas((apostasAtuais) => [...apostasAtuais, updatedBet]); 
-                    alert("Aposta registrada com sucesso!");
-                }
-                // Limpar campos e sair do modo edição
-                setValor("");
-                setNumero("");
-                setApostador("");
-                setEditingBetId(null);
-            } else {
-                const errorData = await response.json();
-                alert(`Erro ao ${editingBetId ? 'atualizar' : 'registrar'} aposta: ${errorData.message}`);
-            }
-        } catch (error) {
-            console.error(`Erro de rede ao ${editingBetId ? 'atualizar' : 'registrar'} aposta:`, error);
-            alert("Ocorreu um erro de rede. O backend está rodando?");
-        }
-    }
-
-    async function deletarAposta(id) {
-        if (!token) {
-            alert("Você precisa estar logado para excluir uma aposta.");
-            return;
-        }
-
-        if (!window.confirm("Deseja realmente excluir esta aposta?")) {
-            return;
-        }
-
-        try {
-            const response = await fetch(`http://localhost:3000/bets/${id}`, {
-                method: "DELETE",
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                },
-            });
-
-            if (response.ok) {
-                setApostas((apostasAtuais) =>
-                    apostasAtuais.filter((aposta) => aposta.id !== id)
-                );
-                alert("Aposta excluída com sucesso!");
-            } else {
-                const errorData = await response.json();
-                alert(`Erro ao excluir aposta: ${errorData.message}`);
-            }
-        } catch (error) {
-            console.error("Erro de rede ao excluir aposta:", error);
-            alert("Ocorreu um erro de rede ao excluir aposta.");
-        }
-    }
-
-    function editarAposta(aposta) {
-        setEditingBetId(aposta.id);
-        setSelectedDraw(aposta.drawId.toString());
-        setApostador(aposta.betor || "");
-        setAnimal(aposta.animal);
-        setTipoAposta(aposta.betType);
-        setValor(aposta.value.toString());
-        setNumero(aposta.number ? aposta.number.toString() : "");
-    }
-
+function Apostas({
+    apostas, setApostas,
+    draws, setDraws,
+    selectedDraw, setSelectedDraw,
+    selectedFilterDraw, setSelectedFilterDraw,
+    animal, setAnimal,
+    tipoAposta, setTipoAposta,
+    valor, setValor,
+    numero, setNumero,
+    apostador, setApostador,
+    editingBetId, setEditingBetId,
+    registrarAposta,
+    deletarAposta,
+    editarAposta
+}){
     return(
         <div className="p-4 text-center text-3xl overflow-y-auto max-h-[83.5dvh] flex-col lg:flex justify-center lg:justify-between flex-wrap px-[5%] py-[5%]">
             <div className="pb-4 mb-5 lg:mb-0 bg-blue-200 lg:w-[40%] text-start border-4 border-gray-400 shadow-lg shadow-gray-400/70">
