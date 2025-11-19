@@ -6,11 +6,14 @@ import Desempenho from "../components/Desempenho"
 
 import { useState, useEffect } from "react"
 import { useAuth } from "../context/AuthContext"
+import { useNavigate } from 'react-router-dom'
 
 function Dashboard(){
-    const { user, token } = useAuth()
+    const { user, token, logout } = useAuth()
+    const navigate = useNavigate()
     const [maximizado, setMaximizado] = useState(false)
     const [pages, setPages] = useState(0)
+    const [showLogoutModal, setShowLogoutModal] = useState(false)
 
     // Estados para Apostas
     const [apostas, setApostas] = useState([]);
@@ -203,6 +206,15 @@ function Dashboard(){
     function trocaPagina(num){
         setPages(num)
     }
+
+    function confirmLogout() {
+        logout()
+        navigate('/')
+    }
+
+    function cancelLogout() {
+        setShowLogoutModal(false)
+    }
     return(
         <>
         <div className={`${maximizado ? 'h-dvh' : 'h-[93dvh]'} w-dvw border-6 border-gray-400 bg-gray-200`}>
@@ -210,7 +222,7 @@ function Dashboard(){
                 <span className="px-3 font-bold text-white">Sistema de Gerenciamento</span>
                 <div>
                     <button className="bg-gray-500 border-gray-400 border-l-4 px-2 text-white cursor-pointer hover:text-black active:text-white" onClick={maximizar}>□</button>
-                    <button className="bg-gray-500 border-gray-400 border-l-4 px-2 text-red-600 cursor-pointer hover:text-red-700 active:text-white">X</button>
+                    <button className="bg-gray-500 border-gray-400 border-l-4 px-2 text-red-600 cursor-pointer hover:text-red-700 active:text-white" onClick={() => setShowLogoutModal(true)}>X</button>
                 </div>
             </div>
             <div className="bg-gray-400 border-gray-400 border-b-4 flex">
@@ -242,6 +254,29 @@ function Dashboard(){
             
         </div>
         {!maximizado && <Footer/>}
+
+        {showLogoutModal && (
+            <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
+                <div className="bg-white p-6 rounded-lg shadow-lg text-center">
+                    <h2 className="text-xl font-bold mb-4">🏴‍☠️ Tem certeza que quer desertar o navio?</h2>
+                    <p className="mb-6">Os piratas vão sentir sua falta...</p>
+                    <div className="flex gap-4 justify-center">
+                        <button 
+                            onClick={confirmLogout} 
+                            className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600"
+                        >
+                            SIM, FUJA! 🏃‍♂️
+                        </button>
+                        <button 
+                            onClick={cancelLogout} 
+                            className="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600"
+                        >
+                            NÃO, FICO! 💪
+                        </button>
+                    </div>
+                </div>
+            </div>
+        )}
         </>
     )
 }
