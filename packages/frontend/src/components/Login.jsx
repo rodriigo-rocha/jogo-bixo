@@ -1,14 +1,17 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import { useNotification } from "./Notification";
 
 function Login({ onClose }) {
   const [isRegistering, setIsRegistering] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [passwordConfirm, setPasswordConfirm] = useState("");
   const [username, setUsername] = useState("");
   const navigate = useNavigate();
   const { login } = useAuth();
+  const { addNotification } = useNotification();
 
   async function handleAuth(e) {
     e.preventDefault();
@@ -16,6 +19,13 @@ function Login({ onClose }) {
     const body = isRegistering
       ? { email, password, username }
       : { email, password };
+
+    if (isRegistering) {
+      if (password !== passwordConfirm) {
+        addNotification("error", "Senhas não coencidem", "Erro ao registrar");
+        return;
+      }
+    }
 
     try {
       const response = await fetch(url, {
@@ -27,15 +37,27 @@ function Login({ onClose }) {
       if (response.ok) {
         const { token, user } = await response.json();
         login(user, token); // Salva o usuário e o token no contexto
-        alert(`Bem-vindo, ${user.username}!`);
+        addNotification(
+          "success",
+          `Bem-vindo, ${user.username}!`,
+          "Login bem feito",
+        );
         navigate("/dashboard"); // Redireciona para o dashboard
       } else {
         const error = await response.json();
-        alert(`Erro: ${error.message}`);
+        addNotification(
+          "error",
+          `Erro: ${error.message}`,
+          "Erro de requisição",
+        );
       }
     } catch (error) {
       console.error("Erro de autenticação:", error);
-      alert("Ocorreu um erro de rede. O backend está rodando?");
+      addNotification(
+        "error",
+        "Ocorreu um erro de rede. O backend está rodando?",
+        "Erro de requisição",
+      );
     }
   }
 
@@ -88,6 +110,19 @@ function Login({ onClose }) {
           onChange={(e) => setPassword(e.target.value)}
           required
         />
+        {isRegistering && (
+          <>
+            <label for="password-confirm">Confirmar Senha</label>
+            <input
+              id="password-confirm"
+              type="password"
+              className="bg-white"
+              value={passwordConfirm}
+              onChange={(e) => setPasswordConfirm(e.target.value)}
+              required
+            />
+          </>
+        )}
         <button
           type="submit"
           className="mt-4 font-semibold relative left-[50%] translate-x-[-50%] cursor-pointer p-1 bg-gray-100 w-20 hover:bg-gray-500"
