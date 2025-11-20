@@ -1,13 +1,13 @@
-import Footer from "../components/Footer"
-import Desktop from "../components/Desktop"
+import Desktop from "../components/Desktop";
+import Footer from "../components/Footer";
 
 function TelaLogin() {
   return (
     <>
-      <Desktop/>
+      <Desktop />
       <Footer></Footer>
     </>
-  )
+  );
 }
 
-export default TelaLogin
+export default TelaLogin;

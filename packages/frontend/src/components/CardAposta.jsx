@@ -1,9 +1,5 @@
-function CardAposta({titulo, nome, source, numeros}){
-    return(
-        <div>
-
-        </div>
-    )
+function CardAposta({ titulo, nome, source, numeros }) {
+  return <div></div>;
 }
 
-export default CardAposta
+export default CardAposta;

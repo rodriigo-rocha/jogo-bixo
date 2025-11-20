@@ -1,14 +1,13 @@
 import { relations, sql } from "drizzle-orm"; // Importar o `sql`
 import {
+  index,
   integer,
   real,
   sqliteTable,
   text,
-  index,
 } from "drizzle-orm/sqlite-core";
-
-import { users } from "./user.schema";
 import { draws } from "./draw.schema";
+import { users } from "./user.schema";
 
 export const bets = sqliteTable(
   "bets",

@@ -9,7 +9,9 @@ export class PerformanceService {
     console.log("Mês recebido:", month);
     const [year, monthNumber] = month.split("-").map(Number);
 
-    const totalBetsResult = await this.db.select({ count: sql<number>`count(*)`.mapWith(Number) }).from(bets); //nº total de apostas
+    const totalBetsResult = await this.db
+      .select({ count: sql<number>`count(*)`.mapWith(Number) })
+      .from(bets); //nº total de apostas
     const totalBets = totalBetsResult[0]?.count || 0;
     console.log("Total de apostas no banco:", totalBets);
 
@@ -20,11 +22,18 @@ export class PerformanceService {
 
     const startTimestamp = Math.floor(startDate.getTime() / 1000);
     const endTimestamp = Math.floor(endDate.getTime() / 1000);
-    console.log("Start timestamp:", startTimestamp, "End timestamp:", endTimestamp);
+    console.log(
+      "Start timestamp:",
+      startTimestamp,
+      "End timestamp:",
+      endTimestamp,
+    );
 
     const result = await this.db
       .select({
-        totalValue: sql<number>`coalesce(sum(${bets.value}), 0)`.mapWith(Number),
+        totalValue: sql<number>`coalesce(sum(${bets.value}), 0)`.mapWith(
+          Number,
+        ),
         totalBets: sql<number>`count(${bets.id})`.mapWith(Number),
       })
       .from(bets)

@@ -40,7 +40,7 @@ export const drawRoutes = new Elysia({ prefix: "/draws" })
   })
   .get("/:identifier", async ({ params, drawService }) => {
     const identifier = Number(params.identifier);
-    if (isNaN(identifier)) {
+    if (Number.isNaN(identifier)) {
       throw new Error("Identificador do sorteio inválido");
     }
     return await drawService.getDraw(identifier);
@@ -50,7 +50,7 @@ export const drawRoutes = new Elysia({ prefix: "/draws" })
       throw new UnauthorizedError("Usuário não encontrado na requisição");
     }
     const identifier = Number(params.identifier);
-    if (isNaN(identifier)) {
+    if (Number.isNaN(identifier)) {
       throw new Error("Identificador do sorteio inválido");
     }
     return await drawService.closeDraw(identifier, user.id);

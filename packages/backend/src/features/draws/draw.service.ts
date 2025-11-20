@@ -1,4 +1,4 @@
-import { eq, and } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import type { DbInstance } from "../../plugins/db";
 import { draws } from "../../schema";
 
@@ -9,11 +9,9 @@ export class DrawService {
     this.db = db;
   }
 
-  async createDraw(data: {
-    userId: string;
-    identifier: number;
-  }) {
-    const existing = await this.db.query.draws.findFirst({ // vendo se existe já ou não
+  async createDraw(data: { userId: string; identifier: number }) {
+    const existing = await this.db.query.draws.findFirst({
+      // vendo se existe já ou não
       where: eq(draws.identifier, data.identifier),
     });
 
@@ -21,10 +19,13 @@ export class DrawService {
       throw new Error("Identificador do sorteio já existe");
     }
 
-    const result = await this.db.insert(draws).values({
-      ...data,
-      status: "open",
-    }).returning();
+    const result = await this.db
+      .insert(draws)
+      .values({
+        ...data,
+        status: "open",
+      })
+      .returning();
 
     return result[0];
   }
@@ -53,7 +54,9 @@ export class DrawService {
       .returning();
 
     if (result.length === 0) {
-      throw new Error("Sorteio não encontrado ou você não tem permissão para fechá-lo");
+      throw new Error(
+        "Sorteio não encontrado ou você não tem permissão para fechá-lo",
+      );
     }
 
     return result[0];

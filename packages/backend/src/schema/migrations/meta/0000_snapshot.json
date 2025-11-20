@@ -46,9 +46,7 @@
       "indexes": {
         "users_email_unique": {
           "name": "users_email_unique",
-          "columns": [
-            "email"
-          ],
+          "columns": ["email"],
           "isUnique": true
         }
       },
@@ -128,16 +126,12 @@
       "indexes": {
         "user_idx": {
           "name": "user_idx",
-          "columns": [
-            "user_id"
-          ],
+          "columns": ["user_id"],
           "isUnique": false
         },
         "draw_idx": {
           "name": "draw_idx",
-          "columns": [
-            "draw_id"
-          ],
+          "columns": ["draw_id"],
           "isUnique": false
         }
       },
@@ -146,12 +140,8 @@
           "name": "bets_user_id_users_id_fk",
           "tableFrom": "bets",
           "tableTo": "users",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -159,12 +149,8 @@
           "name": "bets_draw_id_draws_id_fk",
           "tableFrom": "bets",
           "tableTo": "draws",
-          "columnsFrom": [
-            "draw_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["draw_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -224,23 +210,17 @@
       "indexes": {
         "draws_identifier_unique": {
           "name": "draws_identifier_unique",
-          "columns": [
-            "identifier"
-          ],
+          "columns": ["identifier"],
           "isUnique": true
         },
         "draw_user_idx": {
           "name": "draw_user_idx",
-          "columns": [
-            "user_id"
-          ],
+          "columns": ["user_id"],
           "isUnique": false
         },
         "draw_identifier_idx": {
           "name": "draw_identifier_idx",
-          "columns": [
-            "identifier"
-          ],
+          "columns": ["identifier"],
           "isUnique": false
         }
       },
@@ -249,12 +229,8 @@
           "name": "draws_user_id_users_id_fk",
           "tableFrom": "draws",
           "tableTo": "users",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }

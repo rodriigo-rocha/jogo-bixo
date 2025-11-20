@@ -1,6 +1,6 @@
 import { and, eq, sql } from "drizzle-orm";
 import type { DbInstance } from "../../plugins/db";
-import { bets, users, draws } from "../../schema";
+import { bets, draws, users } from "../../schema";
 
 export class BetsService {
   private db: DbInstance;
@@ -49,7 +49,7 @@ export class BetsService {
       .where(eq(bets.id, createdBet.id))
       .limit(1);
 
-    const formattedBet = betWithRelations.map(row => ({
+    const formattedBet = betWithRelations.map((row) => ({
       id: row.id,
       userId: row.userId,
       drawId: row.drawId,
@@ -59,16 +59,20 @@ export class BetsService {
       value: row.value,
       number: row.number,
       createdAt: row.createdAt,
-      user: row.userId_rel ? {
-        id: row.userId_rel,
-        username: row.username,
-        email: row.email,
-      } : null,
-      draw: row.drawId_rel ? {
-        id: row.drawId_rel,
-        identifier: row.drawIdentifier,
-        status: row.drawStatus,
-      } : null,
+      user: row.userId_rel
+        ? {
+            id: row.userId_rel,
+            username: row.username,
+            email: row.email,
+          }
+        : null,
+      draw: row.drawId_rel
+        ? {
+            id: row.drawId_rel,
+            identifier: row.drawIdentifier,
+            status: row.drawStatus,
+          }
+        : null,
     }))[0];
 
     console.log("Aposta criada com relacionamentos:", formattedBet);
@@ -104,7 +108,7 @@ export class BetsService {
       .where(eq(bets.userId, userId))
       .orderBy(bets.createdAt);
 
-    const formattedResult = result.map(row => ({
+    const formattedResult = result.map((row) => ({
       id: row.id,
       userId: row.userId,
       drawId: row.drawId,
@@ -114,19 +118,25 @@ export class BetsService {
       value: row.value,
       number: row.number,
       createdAt: row.createdAt,
-      user: row.userId_rel ? {
-        id: row.userId_rel,
-        username: row.username,
-        email: row.email,
-      } : null,
-      draw: row.drawId_rel ? {
-        id: row.drawId_rel,
-        identifier: row.drawIdentifier,
-        status: row.drawStatus,
-      } : null,
+      user: row.userId_rel
+        ? {
+            id: row.userId_rel,
+            username: row.username,
+            email: row.email,
+          }
+        : null,
+      draw: row.drawId_rel
+        ? {
+            id: row.drawId_rel,
+            identifier: row.drawIdentifier,
+            status: row.drawStatus,
+          }
+        : null,
     }));
 
-    console.log(`Buscando apostas para userId: ${userId}, encontradas: ${formattedResult.length}`);
+    console.log(
+      `Buscando apostas para userId: ${userId}, encontradas: ${formattedResult.length}`,
+    );
     console.log("Primeira aposta formatada:", formattedResult[0]);
     return formattedResult;
   }
@@ -159,14 +169,18 @@ export class BetsService {
       .where(and(eq(bets.id, betId), eq(bets.userId, userId)));
   }
 
-  async updateBet(betId: number, userId: string, data: {
-    drawId?: number;
-    betor?: string;
-    animal?: string;
-    betType?: string;
-    value?: number;
-    number?: number;
-  }) {
+  async updateBet(
+    betId: number,
+    userId: string,
+    data: {
+      drawId?: number;
+      betor?: string;
+      animal?: string;
+      betType?: string;
+      value?: number;
+      number?: number;
+    },
+  ) {
     const result = await this.db
       .update(bets)
       .set(data)
@@ -207,7 +221,7 @@ export class BetsService {
       .where(eq(bets.id, updatedBet.id))
       .limit(1);
 
-    const formattedBet = betWithRelations.map(row => ({
+    const formattedBet = betWithRelations.map((row) => ({
       id: row.id,
       userId: row.userId,
       drawId: row.drawId,
@@ -217,16 +231,20 @@ export class BetsService {
       value: row.value,
       number: row.number,
       createdAt: row.createdAt,
-      user: row.userId_rel ? {
-        id: row.userId_rel,
-        username: row.username,
-        email: row.email,
-      } : null,
-      draw: row.drawId_rel ? {
-        id: row.drawId_rel,
-        identifier: row.drawIdentifier,
-        status: row.drawStatus,
-      } : null,
+      user: row.userId_rel
+        ? {
+            id: row.userId_rel,
+            username: row.username,
+            email: row.email,
+          }
+        : null,
+      draw: row.drawId_rel
+        ? {
+            id: row.drawId_rel,
+            identifier: row.drawIdentifier,
+            status: row.drawStatus,
+          }
+        : null,
     }))[0];
 
     return formattedBet;

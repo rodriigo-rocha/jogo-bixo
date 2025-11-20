@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useAuth } from "../context/AuthContext";
 import GraficoAposta from "./GraficoAposta";
 
@@ -12,7 +12,7 @@ function Desempenho() {
   const [totalDraws, setTotalDraws] = useState(0);
   const [openDraws, setOpenDraws] = useState(0);
 
-  const fetchDrawsStats = async () => {
+  const fetchDrawsStats = useCallback(async () => {
     if (!token) return;
     try {
       const response = await fetch("http://localhost:3000/draws", {
@@ -23,40 +23,37 @@ function Desempenho() {
       if (response.ok) {
         const draws = await response.json();
         setTotalDraws(draws.length);
-        setOpenDraws(draws.filter(draw => draw.status === "open").length);
+        setOpenDraws(draws.filter((draw) => draw.status === "open").length);
       }
     } catch (error) {
       console.error("Erro ao buscar estatísticas dos sorteios:", error);
     }
-  };
-
-  useEffect(() => {
-    fetchDrawsStats();
-    
-    // Atualizar estatísticas a cada 10 segundos
-    const interval = setInterval(fetchDrawsStats, 10000);
-    
-    return () => clearInterval(interval);
   }, [token]);
 
   useEffect(() => {
+    fetchDrawsStats();
+
+    // Atualizar estatísticas a cada 10 segundos
+    const interval = setInterval(fetchDrawsStats, 10000);
+
+    return () => clearInterval(interval);
+  }, [fetchDrawsStats]);
+
+  useEffect(() => {
     if (selectedMonth && token) {
-      fetch(
-        `http://localhost:3000/performance?month=${selectedMonth}`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+      fetch(`http://localhost:3000/performance?month=${selectedMonth}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
         },
-      )
+      })
         .then((res) => res.json())
         .then((data) => {
           console.log("Dados recebidos da API:", data); // Adicionado para depuração
           if (data.performance) {
             setPerformanceData(data.performance);
             const processedChartData = data.dailyPerformance.map((item) => ({
-            ...item,
-            day: parseInt(item.day, 10),
+              ...item,
+              day: parseInt(item.day, 10),
             }));
             setChartData(processedChartData);
           } else {
@@ -95,9 +92,7 @@ function Desempenho() {
       </div>
       <div className="pb-4 mb-5 rounded-md lg:mb-0 bg-blue-200 lg:w-[20%] text-start border-4 border-gray-400 shadow-lg shadow-gray-400/70 flex flex-col">
         <h2 className="text-xl text-center bg-gray-400 mb-4">Apostas Ativas</h2>
-        <span className="text-center">
-          {performanceData?.totalBets || 0}
-        </span>
+        <span className="text-center">{performanceData?.totalBets || 0}</span>
       </div>
       <div className="pb-4 mb-5 rounded-md lg:mb-0 bg-blue-200 lg:w-[20%] text-start border-4 border-gray-400 shadow-lg shadow-gray-400/70 flex flex-col">
         <h2 className="text-xl text-center bg-gray-400 mb-4">Total Apostado</h2>
@@ -108,7 +103,7 @@ function Desempenho() {
       <div className="flex justify-center gap-20 w-full px-10 mt-5 items-center">
         <div className="flex flex-col w-[45%]">
           <div className="bg-gray-400 flex justify-center items-center gap-2 px-2 py-1 font-semibold text-lg">
-            <label>Selecione o Mês: </label>
+            <span>Selecione o Mês: </span>
             <input
               type="month"
               value={selectedMonth}
@@ -122,8 +117,13 @@ function Desempenho() {
           <a
             href="https://www.manual.com.br/?srsltid=AfmBOorI0seIwH6k7_CSHJRXS9czLQBNFmaOs-lZaLNUnGesdecXBx63"
             target="_blank"
+            rel="noopener"
           >
-            <img src="/public/Adphyl.jpg" className="w-fit"></img>
+            <img
+              src="/Adphyl.jpg"
+              alt="Melhor anúncio de todos"
+              className="w-fit"
+            ></img>
           </a>
         </div>
       </div>

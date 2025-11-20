@@ -39,7 +39,7 @@ export const betsRoutes = new Elysia({ prefix: "/bets" })
         throw new UnauthorizedError("Usuário não encontrado na requisição");
       }
       const betId = Number(params.id);
-      if (isNaN(betId)) {
+      if (Number.isNaN(betId)) {
         throw new Error("ID da aposta inválido");
       }
       return betsService.updateBet(betId, user.id, body);
@@ -57,14 +57,14 @@ export const betsRoutes = new Elysia({ prefix: "/bets" })
   )
   .get("/draw/:drawId", async ({ params, betsService }) => {
     const drawId = Number(params.drawId);
-    if (isNaN(drawId)) {
+    if (Number.isNaN(drawId)) {
       throw new Error("ID do sorteio inválido");
     }
     return betsService.getBetsByDraw(drawId);
   })
   .get("/draw/:drawId/total", async ({ params, betsService }) => {
     const drawId = Number(params.drawId);
-    if (isNaN(drawId)) {
+    if (Number.isNaN(drawId)) {
       throw new Error("ID do sorteio inválido");
     }
     const total = await betsService.getTotalValueByDraw(drawId);
@@ -78,7 +78,7 @@ export const betsRoutes = new Elysia({ prefix: "/bets" })
       throw new UnauthorizedError("Usuário não encontrado na requisição");
     }
     const betId = Number(params.id);
-    if (isNaN(betId)) {
+    if (Number.isNaN(betId)) {
       throw new Error("ID da aposta inválido");
     }
     await betsService.deleteBet(betId, user.id);
