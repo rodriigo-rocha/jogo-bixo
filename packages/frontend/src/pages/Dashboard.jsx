@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import Apostas from "../components/Apostas";
 import Desempenho from "../components/Desempenho";
@@ -25,6 +25,7 @@ function Dashboard() {
   const [numero, setNumero] = useState("");
   const [apostador, setApostador] = useState("");
   const [editingBetId, setEditingBetId] = useState(null);
+  const hasFetchedRef = useRef(false);
 
   const fetchDraws = useCallback(async () => {
     if (!token) return;
@@ -70,17 +71,12 @@ function Dashboard() {
   });
 
   useEffect(() => {
-    if (user && token) {
-      // Garante que ambos existam antes de buscar
+    if (user && token && !hasFetchedRef.current) {
+      hasFetchedRef.current = true;
       fetchDraws();
       fetchApostas();
     }
-  }, [
-    user,
-    token,
-    fetchApostas, // Garante que ambos existam antes de buscar
-    fetchDraws,
-  ]); // Adiciona 'token' como dependência
+  }, [user, token]);
 
   async function registrarAposta() {
     if (!user) {
