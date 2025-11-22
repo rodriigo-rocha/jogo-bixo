@@ -26,7 +26,7 @@ export const userRoutes = new Elysia({
       return {
         id: dbUser!.id,
         username: dbUser!.username,
-        avatar: dbUser!.pfp,
+        avatar: dbUser!.avatar_url,
         email: dbUser!.email,
       };
     },

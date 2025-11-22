@@ -25,7 +25,7 @@ export class AuthService {
       username: data.username,
       email: data.email,
       password: password,
-      pfp: avatar,
+      avatar_url: avatar,
     });
 
     return user;
