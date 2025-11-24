@@ -5,14 +5,25 @@ import { z } from "@jogo-do-bixo/schema";
 import { Elysia, t } from "elysia";
 import { BaseHttpError } from "./error";
 import { authRoutes } from "./features/auth/auth.route";
-import { betsRoutes } from "./features/bets/bets.route";
-import { drawRoutes } from "./features/draws/draw.route";
-import { performanceRoutes } from "./features/performance/performance.route";
+import { AuthService } from "./features/auth/auth.service";
+import { gameRoutes } from "./features/game/game.routes";
+import { simulationCron } from "./features/simulation/simulation.cron";
 import { userRoutes } from "./features/users/users.route";
-import { dbPlugin } from "./plugins/db";
+import { UserService } from "./features/users/users.service";
+import { db, dbPlugin } from "./plugins/db";
 import { loggerPlugin } from "./plugins/logger";
 
 const app = new Elysia({ adapter: node() });
+
+(async () => {
+  try {
+    const userService = new UserService(db);
+    const authService = new AuthService(userService);
+    authService.ensureDefaultAdmin();
+  } catch (e) {
+    console.error("Erro ao rodar seed de admin:", e);
+  }
+})();
 
 // Plugins
 app
@@ -80,9 +91,8 @@ app
 app
   .use(userRoutes)
   .use(authRoutes)
-  .use(betsRoutes)
-  .use(drawRoutes)
-  .use(performanceRoutes)
+  .use(gameRoutes)
+  .use(simulationCron)
   .get(
     "/",
     () => ({

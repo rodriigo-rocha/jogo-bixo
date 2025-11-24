@@ -2,6 +2,7 @@ import { Elysia, t } from "elysia";
 import { authPlugin } from "../../plugins/auth";
 import { dbPlugin } from "../../plugins/db";
 import { loggerPlugin } from "../../plugins/logger";
+import { permPlugin } from "../../plugins/permission";
 import { UserService } from "./users.service";
 
 export const userRoutes = new Elysia({
@@ -20,14 +21,21 @@ export const userRoutes = new Elysia({
   })
   .get(
     "/me",
-    async ({ user, userService }) => {
+    async ({ user, userService, set }) => {
       const dbUser = await userService.findById(user!.id);
+
+      if (!dbUser) {
+        set.status = 401;
+        return { message: "Não autorizado" };
+      }
 
       return {
         id: dbUser!.id,
         username: dbUser!.username,
         avatar: dbUser!.avatar_url,
         email: dbUser!.email,
+        role: dbUser!.role,
+        balance: dbUser!.balance,
       };
     },
     {
@@ -44,6 +52,7 @@ export const userRoutes = new Elysia({
                   username: t.String(),
                   avatar: t.String(),
                   email: t.String(),
+                  role: t.String(),
                 }),
               },
             },
@@ -56,4 +65,40 @@ export const userRoutes = new Elysia({
         security: [{ bearerAuth: [] }],
       },
     },
+  )
+  .group("/admin", (app) =>
+    app.use(permPlugin).get(
+      "/",
+      async ({ userService, query }) => {
+        return await userService.findAllUsers(query);
+      },
+      {
+        isAdmin: true,
+        query: t.Object({
+          username: t.Optional(
+            t.String({ description: "Filtrar por nome (parcial)" }),
+          ),
+          email: t.Optional(
+            t.String({ description: "Filtrar por email (parcial)" }),
+          ),
+          role: t.Optional(
+            t.Enum(
+              { admin: "admin", player: "player" },
+              { description: "Filtrar por cargo" },
+            ),
+          ),
+          sortBy: t.Optional(
+            t.Enum(
+              { username: "username", balance: "balance" },
+              { default: "username" },
+            ),
+          ),
+          order: t.Optional(
+            t.Enum({ asc: "asc", desc: "desc" }, { default: "desc" }),
+          ),
+          page: t.Optional(t.Integer({ minimum: 0, default: 0 })),
+        }),
+        detail: { summary: "Listar usuários com filtros" },
+      },
+    ),
   );

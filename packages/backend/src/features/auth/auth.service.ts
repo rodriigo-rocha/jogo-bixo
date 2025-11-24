@@ -26,9 +26,31 @@ export class AuthService {
       email: data.email,
       password: password,
       avatar_url: avatar,
+      role: "player",
+      balance: 10000,
     });
 
     return user;
+  }
+
+  async ensureDefaultAdmin() {
+    const adminEmail = "admin@bicho.com";
+
+    const existing = await this.userService.findByEmail(adminEmail);
+    if (existing) {
+      return;
+    }
+
+    const hashedPassword = await bcrypt.hash("admin123", 10);
+
+    await this.userService.create({
+      username: "Bicheiro Chefe",
+      email: adminEmail,
+      password: hashedPassword,
+      avatar_url: "https://api.dicebear.com/7.x/avataaars/svg?seed=Admin",
+      role: "admin",
+      balance: 99999999, // Dinheiro infinito pra pagar a banca (ele é a banca)
+    });
   }
 
   async login(data: Login) {
