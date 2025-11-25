@@ -19,11 +19,11 @@ import {
 } from "../../schema";
 
 export class GameService {
-  constructor(private db: DbInstance) {}
+  constructor(private db: DbInstance) { }
 
   async logTransaction(
     userId: string,
-    type: "BET" | "WIN" | "DEPOSIT" | "WITHDRAW",
+    type: "BET" | "WIN" | "DEPOSIT" | "WITHDRAW" | "REFUND",
     amount: number,
     description: string,
     referenceId?: string,
@@ -46,23 +46,10 @@ export class GameService {
     });
   }
 
-  async placeBet(userId: string, data: CreateBet) {
+  async placeBet(userId: string, data: CreateBet & { betor?: string; drawId?: string }) {
     if (data.type === "GRUPO" && (data.selection < 1 || data.selection > 25)) {
       throw new BadRequestError(
         "Para apostas em GRUPO, o número deve ser entre 1 e 25 (Bichos).",
-      );
-    }
-    if (data.type === "DEZENA" && (data.selection < 0 || data.selection > 99)) {
-      throw new BadRequestError(
-        "Para apostas em DEZENA, o número deve ser entre 00 e 99.",
-      );
-    }
-    if (
-      data.type === "MILHAR" &&
-      (data.selection < 0 || data.selection > 9999)
-    ) {
-      throw new BadRequestError(
-        "Para apostas em MILHAR, o número deve ser entre 0000 e 9999.",
       );
     }
 
@@ -71,8 +58,15 @@ export class GameService {
     });
 
     if (!user) throw new NotFoundError("User not found");
-    if (user.balance < data.amount)
+    if (user.balance < data.amount * 100)
       throw new BadRequestError("Saldo insuficiente");
+
+    // Verificar se o sorteio existe e está aberto
+    const draw = await this.db.query.draws.findFirst({
+      where: eq(draws.id, data.drawId),
+    });
+    if (!draw) throw new NotFoundError("Sorteio não encontrado");
+    if (draw.status !== "OPEN") throw new BadRequestError("Sorteio não está aberto para apostas");
 
     // Desconta Saldo
     const newBalance = user.balance - data.amount;
@@ -82,11 +76,13 @@ export class GameService {
       .where(eq(users.id, userId));
 
     // Cria Aposta
-    const potentialWin = data.amount * GAME_ODDS[data.type];
+    const potentialWin = data.amount * GAME_ODDS[data.type] * 100;
     const betData = {
       id: uuidv7(),
       userId,
-      amount: data.amount,
+      betor: data.betor,
+      drawId: data.drawId,
+      amount: data.amount * 100,
       type: data.type,
       selection: data.selection,
       potentialWin,
@@ -99,6 +95,10 @@ export class GameService {
     if (data.type === "GRUPO") desc += ` (${getAnimalName(data.selection)})`;
     else if (data.type === "DEZENA")
       desc += ` (Grupo ${getAnimalName(getAnimalGroup(data.selection))})`;
+    else if (data.type === "CENTENA")
+      desc += ` (Grupo ${getAnimalName(getAnimalGroup(data.selection % 100))})`;
+    else if (data.type === "MILHAR")
+      desc += ` (Grupo ${getAnimalName(getAnimalGroup(data.selection % 100))})`;
 
     await this.logTransaction(
       userId,
@@ -188,9 +188,10 @@ export class GameService {
   }
 
   async getLatestDraws() {
+    // Priorizar sorteios abertos primeiro, depois os mais recentes
     return await this.db.query.draws.findMany({
-      orderBy: (draws, { desc }) => [desc(draws.createdAt)],
-      limit: 10,
+      orderBy: (draws, { asc, desc }) => [desc(draws.status), desc(draws.createdAt)],
+      limit: 20, // Aumentar limite para mostrar mais sorteios
     });
   }
 
@@ -242,22 +243,192 @@ export class GameService {
     });
   }
 
-  async getAdminTransactions(filters: {
-    userId?: string;
-    type?: TransactionType;
-    page?: number;
-  }) {
-    const conditions: SQL<unknown>[] = [];
-    if (filters.userId)
-      conditions.push(eq(transactions.userId, filters.userId));
-    if (filters.type) conditions.push(eq(transactions.type, filters.type));
-
-    return await this.db.query.transactions.findMany({
-      where: and(...conditions),
-      orderBy: (t, { desc }) => [desc(t.createdAt)],
-      limit: 100,
-      offset: 100 * (filters.page ?? 0),
-      with: { user: { columns: { id: true, username: true, email: true } } },
+  async updateBet(userId: string, betId: string, data: Partial<CreateBet>) {
+    const bet = await this.db.query.bets.findFirst({
+      where: and(eq(bets.id, betId), eq(bets.userId, userId)),
     });
+
+    if (!bet) throw new NotFoundError("Aposta não encontrada");
+    if (bet.status !== "PENDING") throw new BadRequestError("Aposta já processada, não pode ser editada");
+
+    // Validar dados
+    if (data.type) {
+      if (data.type === "GRUPO" && (data.selection! < 1 || data.selection! > 25)) {
+        throw new BadRequestError("Para apostas em GRUPO, o número deve ser entre 1 e 25.");
+      }
+    }
+
+    const updateData: Partial<typeof bet> = {};
+    if (data.amount !== undefined) updateData.amount = data.amount * 100;
+    if (data.type !== undefined) updateData.type = data.type;
+    if (data.selection !== undefined) updateData.selection = data.selection;
+
+    if (updateData.amount || updateData.type) {
+      const newAmount = updateData.amount ?? bet.amount;
+      const newType = updateData.type ?? bet.type;
+      updateData.potentialWin = newAmount * GAME_ODDS[newType];
+    }
+
+    await this.db.update(bets).set(updateData).where(eq(bets.id, betId));
+
+    return await this.db.query.bets.findFirst({
+      where: eq(bets.id, betId),
+      with: { draw: true },
+    });
+  }
+
+  async deleteBet(userId: string, betId: string) {
+    const bet = await this.db.query.bets.findFirst({
+      where: and(eq(bets.id, betId), eq(bets.userId, userId)),
+    });
+
+    if (!bet) throw new NotFoundError("Aposta não encontrada");
+    if (bet.status !== "PENDING") throw new BadRequestError("Aposta já processada, não pode ser excluída");
+
+    // Reembolsar saldo
+    await this.db.update(users).set({
+      balance: sql`${users.balance} + ${bet.amount}`,
+    }).where(eq(users.id, userId));
+
+    // Deletar aposta
+    await this.db.delete(bets).where(eq(bets.id, betId));
+
+    // Log reembolso
+    await this.logTransaction(userId, "REFUND", bet.amount, `Reembolso: Aposta ${bet.type} excluída`, betId);
+
+    return { success: true };
+  }
+
+  async createOpenDraw(data: Partial<{ number: string; city: string; temperature: number; humidity: number; windSpeed: number }>) {
+    const drawData = {
+      id: uuidv7(),
+      number: data.number || Math.floor(Math.random() * 10000).toString().padStart(4, "0"),
+      status: "OPEN" as const,
+      city: data.city,
+      temperature: data.temperature,
+      humidity: data.humidity,
+      windSpeed: data.windSpeed,
+      createdAt: new Date(),
+    };
+
+    const [newDraw] = await this.db.insert(draws).values(drawData).returning();
+
+    console.log("Created draw:", newDraw);
+
+    return newDraw;
+  }
+
+  async updateDraw(drawId: string, data: Partial<{ number: string; city: string; temperature: number; humidity: number; windSpeed: number }>) {
+    const draw = await this.db.query.draws.findFirst({
+      where: eq(draws.id, drawId),
+    });
+
+    if (!draw) throw new NotFoundError("Sorteio não encontrado");
+    if (draw.status !== "OPEN") throw new BadRequestError("Sorteio já fechado, não pode ser editado");
+
+    await this.db.update(draws).set(data).where(eq(draws.id, drawId));
+
+    return await this.db.query.draws.findFirst({
+      where: eq(draws.id, drawId),
+    });
+  }
+
+  async deleteDraw(drawId: string) {
+    const draw = await this.db.query.draws.findFirst({
+      where: eq(draws.id, drawId),
+    });
+
+    if (!draw) throw new NotFoundError("Sorteio não encontrado");
+
+    // Verificar se há apostas associadas apenas para sorteios abertos
+    if (draw.status === "OPEN") {
+      const associatedBets = await this.db.query.bets.findMany({
+        where: eq(bets.drawId, drawId),
+      });
+
+      if (associatedBets.length > 0) throw new BadRequestError("Não pode excluir sorteio aberto com apostas associadas");
+    } else {
+      // Para sorteios fechados, remover a referência das apostas antes de excluir
+      await this.db.update(bets).set({ drawId: null }).where(eq(bets.drawId, drawId));
+    }
+
+    await this.db.delete(draws).where(eq(draws.id, drawId));
+
+    return { success: true };
+  }
+
+  async executeSpecificDraw(drawId: string) {
+    const draw = await this.db.query.draws.findFirst({
+      where: eq(draws.id, drawId),
+    });
+
+    if (!draw) throw new NotFoundError("Sorteio não encontrado");
+    if (draw.status !== "OPEN") throw new BadRequestError("Sorteio já fechado");
+
+    // Usar o número do sorteio existente ou gerar um novo baseado no clima
+    let drawNumber = draw.number;
+    if (!drawNumber) {
+      const weather = await getRandomWeather();
+      if (weather.success) {
+        const chaosValue =
+          weather.temp * 100 + weather.humidity * 13 + weather.wind * 77;
+        const calcNumber = Math.floor(Math.abs(chaosValue) % 10000);
+        drawNumber = calcNumber.toString().padStart(4, "0");
+      } else {
+        drawNumber = Math.floor(Math.random() * 10000)
+          .toString()
+          .padStart(4, "0");
+      }
+    }
+
+    // Atualizar o sorteio para CLOSED e definir o número
+    await this.db
+      .update(draws)
+      .set({ status: "CLOSED", number: drawNumber })
+      .where(eq(draws.id, drawId));
+
+    // Processar apostas pendentes associadas a este sorteio
+    const pendingBets = await this.db.query.bets.findMany({
+      where: and(eq(bets.status, "PENDING"), eq(bets.drawId, drawId)),
+    });
+
+    const results = { winners: 0, totalPaid: 0, draw: drawNumber };
+
+    for (const bet of pendingBets) {
+      const isWinner = checkVictory(bet.type, bet.selection, drawNumber);
+
+      if (isWinner) {
+        // Atualiza Aposta
+        await this.db
+          .update(bets)
+          .set({ status: "WON" })
+          .where(eq(bets.id, bet.id));
+
+        // Paga Usuário
+        await this.db
+          .update(users)
+          .set({ balance: sql`${users.balance} + ${bet.potentialWin}` })
+          .where(eq(users.id, bet.userId));
+
+        // Loga Transação
+        await this.logTransaction(
+          bet.userId,
+          "WIN",
+          bet.potentialWin,
+          `Prêmio: Aposta ${bet.type} (Sorteio ${drawNumber})`,
+          bet.id,
+        );
+
+        results.winners++;
+        results.totalPaid += bet.potentialWin;
+      } else {
+        await this.db
+          .update(bets)
+          .set({ status: "LOST" })
+          .where(eq(bets.id, bet.id));
+      }
+    }
+
+    return results;
   }
 }
