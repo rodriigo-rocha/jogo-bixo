@@ -13,8 +13,9 @@ export const bets = sqliteTable("bets", {
   amount: integer("amount").notNull(),
   potentialWin: integer("potential_win").notNull(),
 
-  type: text("type", { enum: ["GRUPO", "DEZENA", "MILHAR"] }).notNull(),
+  type: text("type", { enum: ["GRUPO", "DEZENA", "CENTENA", "MILHAR"] }).notNull(),
   selection: integer("selection").notNull(),
+  betor: text("betor"),
   status: text("status", { enum: ["PENDING", "WON", "LOST"] })
     .default("PENDING")
     .notNull(),
@@ -26,5 +27,5 @@ export const betsRelations = relations(bets, ({ one }) => ({
   draw: one(draws, { fields: [bets.drawId], references: [draws.id] }),
 }));
 
-export type BetsType = "GRUPO" | "DEZENA" | "MILHAR";
+export type BetsType = "GRUPO" | "DEZENA" | "CENTENA" | "MILHAR";
 export type BetsStatus = "PENDING" | "WON" | "LOST";
