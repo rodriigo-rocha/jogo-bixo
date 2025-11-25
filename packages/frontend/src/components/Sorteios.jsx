@@ -16,7 +16,7 @@ function Sorteios() {
   const fetchDraws = useCallback(async () => {
     if (!token) return;
     try {
-      const response = await fetch("http://localhost:3000/draws", {
+      const response = await fetch("http://localhost:3000/game/results", {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -44,28 +44,29 @@ function Sorteios() {
 
     setLoading(true);
     try {
-      const response = await fetch("http://localhost:3000/draws", {
+      const response = await fetch("http://localhost:3000/game/admin/draw/open", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
-          identifier: parseInt(identifier, 10),
+          number: identifier.trim(),
         }),
       });
 
       if (response.ok) {
-        const novoSorteio = await response.json();
-        setDraws((prev) => [novoSorteio, ...prev]);
+        const data = await response.json();
+        console.log("Created draw response:", data);
+        setDraws((prev) => [data.draw, ...prev]);
         setIdentifier("");
-        alert("Sorteio registrado com sucesso!");
+        alert("Sorteio criado com sucesso!");
       } else {
         const errorData = await response.json();
-        alert(`Erro ao registrar sorteio: ${errorData.message}`);
+        alert(`Erro ao criar sorteio: ${errorData.message}`);
       }
     } catch (error) {
-      console.error("Erro de rede ao registrar sorteio:", error);
+      console.error("Erro de rede ao criar sorteio:", error);
       alert("Ocorreu um erro de rede. O backend está rodando?");
     } finally {
       setLoading(false);
@@ -74,8 +75,8 @@ function Sorteios() {
 
   const filteredDraws = draws.filter((draw) => {
     if (pages === 0) return true; // Todas
-    if (pages === 1) return draw.status === "open";
-    if (pages === 2) return draw.status === "closed";
+    if (pages === 1) return draw.status === "OPEN";
+    if (pages === 2) return draw.status === "CLOSED";
     return true;
   });
 
@@ -140,7 +141,7 @@ function Sorteios() {
                 <CardSorteio
                   key={draw.id}
                   drawId={draw.id}
-                  identificador={draw.identifier}
+                  identificador={draw.number}
                   status={draw.status}
                   onStatusChange={fetchDraws}
                 />
