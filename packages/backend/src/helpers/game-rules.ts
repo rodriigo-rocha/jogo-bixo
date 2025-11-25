@@ -38,16 +38,21 @@ export const getAnimalName = (group: number) => {
 
 // Verifica se a aposta ganhou
 export const checkVictory = (
-  type: "GRUPO" | "DEZENA" | "MILHAR",
+  type: "GRUPO" | "DEZENA" | "CENTENA" | "MILHAR",
   selection: number,
   drawnNumber: string,
 ): boolean => {
   const firstPrizeDezena = parseInt(drawnNumber.slice(-2), 10);
+  const firstPrizeCentena = parseInt(drawnNumber.slice(0, 3), 10);
   const firstPrizeMilhar = parseInt(drawnNumber, 10);
   const firstPrizeGroup = getAnimalGroup(firstPrizeDezena);
 
   if (type === "MILHAR") {
     return selection === firstPrizeMilhar;
+  }
+
+  if (type === "CENTENA") {
+    return selection === firstPrizeCentena;
   }
 
   if (type === "DEZENA") {
