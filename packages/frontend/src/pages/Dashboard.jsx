@@ -300,7 +300,7 @@ function Dashboard() {
             </li>
           </nav>
         </div>
-        {pages === 3 && <Sorteios />}
+        {pages === 3 && <Sorteios draws={draws} fetchDraws={fetchDraws} />}
         {pages === 2 && <TabelaAnimais />}
         {pages === 1 && (
           <Apostas
