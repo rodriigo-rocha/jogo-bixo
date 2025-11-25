@@ -20,7 +20,7 @@ function Dashboard() {
   const [selectedDraw, setSelectedDraw] = useState("");
   const [selectedFilterDraw, setSelectedFilterDraw] = useState("");
   const [animal, setAnimal] = useState("1");
-  const [tipoAposta, setTipoAposta] = useState("grupo");
+  const [tipoAposta, setTipoAposta] = useState("dezena");
   const [valor, setValor] = useState("");
   const [numero, setNumero] = useState("");
   const [apostador, setApostador] = useState("");
@@ -30,7 +30,7 @@ function Dashboard() {
   const fetchDraws = useCallback(async () => {
     if (!token) return;
     try {
-      const response = await fetch("http://localhost:3000/draws", {
+      const response = await fetch("http://localhost:3000/game/results", {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -38,7 +38,7 @@ function Dashboard() {
       if (response.ok) {
         const data = await response.json();
         setDraws(data);
-        const openDraw = data.find((d) => d.status === "open");
+        const openDraw = data.find((d) => d.status === "OPEN");
         if (openDraw) {
           setSelectedDraw(openDraw.id.toString());
         }
@@ -53,7 +53,7 @@ function Dashboard() {
   const fetchApostas = useCallback(async () => {
     if (!user || !token) return; // Não faz nada se não houver usuário ou token
     try {
-      const response = await fetch(`http://localhost:3000/bets/${user.id}`, {
+      const response = await fetch("http://localhost:3000/game/my-bets", {
         headers: {
           // ADICIONANDO O HEADER DE AUTORIZAÇÃO
           Authorization: `Bearer ${token}`,
@@ -83,8 +83,20 @@ function Dashboard() {
       alert("Você precisa estar logado para fazer uma aposta.");
       return;
     }
+    if (!apostador.trim()) {
+      alert("Digite o nome do apostador.");
+      return;
+    }
     if (!selectedDraw) {
-      alert("Selecione um sorteio primeiro.");
+      alert("Selecione um sorteio.");
+      return;
+    }
+    if (!valor || isNaN(parseFloat(valor)) || parseFloat(valor) < 1) {
+      alert("Digite um valor válido (mínimo R$ 1,00).");
+      return;
+    }
+    if (tipoAposta !== "grupo" && (!numero || isNaN(parseInt(numero)))) {
+      alert("Digite um número válido para o tipo de aposta.");
       return;
     }
     try {
@@ -101,30 +113,36 @@ function Dashboard() {
       let response;
       if (editingBetId) {
         // Editar aposta existente
-        response = await fetch(`http://localhost:3000/bets/${editingBetId}`, {
+        response = await fetch(`http://localhost:3000/game/bet/${editingBetId}`, {
           method: "PUT",
           headers: {
             "Content-Type": "application/json",
             Authorization: `Bearer ${token}`,
           },
           body: JSON.stringify({
-            drawId: parseInt(selectedDraw, 10),
-            betor: apostador,
-            animal,
-            betType: tipoAposta,
-            value: parseFloat(valor),
-            number: tipoAposta !== "grupo" ? parseInt(numero, 10) : undefined,
+            amount: parseFloat(valor),
+            type: tipoAposta.toUpperCase(),
+            selection: tipoAposta === "grupo" ? parseInt(animal, 10) : parseInt(numero, 10),
           }),
         });
       } else {
         // Criar nova aposta
-        response = await fetch("http://localhost:3000/bets", {
+        const body = {
+          drawId: selectedDraw,
+          betor: apostador,
+          amount: parseFloat(valor),
+          type: tipoAposta.toUpperCase(),
+          selection: tipoAposta === "grupo" ? parseInt(animal, 10) : parseInt(numero, 10),
+        };
+        console.log("tipoAposta:", tipoAposta, "type:", tipoAposta.toUpperCase());
+        console.log("Sending bet:", body);
+        response = await fetch("http://localhost:3000/game/bet", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
             Authorization: `Bearer ${token}`,
           },
-          body: JSON.stringify(betData),
+          body: JSON.stringify(body),
         });
       }
 
@@ -134,13 +152,13 @@ function Dashboard() {
           // Atualizar a aposta na lista
           setApostas((apostasAtuais) =>
             apostasAtuais.map((aposta) =>
-              aposta.id === editingBetId ? updatedBet : aposta,
+              aposta.id === editingBetId ? updatedBet.bet : aposta,
             ),
           );
           alert("Aposta atualizada com sucesso!");
         } else {
           // Adicionar nova aposta
-          setApostas((apostasAtuais) => [...apostasAtuais, updatedBet]);
+          setApostas((apostasAtuais) => [...apostasAtuais, updatedBet.bet]);
           alert("Aposta registrada com sucesso!");
         }
         // Limpar campos e sair do modo edição
@@ -148,19 +166,36 @@ function Dashboard() {
         setNumero("");
         setApostador("");
         setEditingBetId(null);
+        // Refetch para garantir dados atualizados
+        fetchApostas();
       } else {
         const errorData = await response.json();
+        console.log("Error response:", errorData);
         alert(
-          `Erro ao ${editingBetId ? "atualizar" : "registrar"} aposta: ${errorData.message}`,
+          `Erro ao registrar aposta: ${errorData.message}`,
         );
       }
     } catch (error) {
       console.error(
-        `Erro de rede ao ${editingBetId ? "atualizar" : "registrar"} aposta:`,
+        `Erro de rede ao registrar aposta:`,
         error,
       );
       alert("Ocorreu um erro de rede. O backend está rodando?");
     }
+  }
+
+  function editarAposta(aposta) {
+    setEditingBetId(aposta.id);
+    setApostador(aposta.betor || "");
+    if (aposta.type === "GRUPO") {
+      setAnimal(aposta.selection.toString());
+      setNumero("");
+    } else {
+      setAnimal("1");
+      setNumero(aposta.selection.toString());
+    }
+    setTipoAposta(aposta.type.toLowerCase());
+    setValor((aposta.amount / 100).toString());
   }
 
   async function deletarAposta(id) {
@@ -174,7 +209,7 @@ function Dashboard() {
     }
 
     try {
-      const response = await fetch(`http://localhost:3000/bets/${id}`, {
+      const response = await fetch(`http://localhost:3000/game/bet/${id}`, {
         method: "DELETE",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -194,16 +229,6 @@ function Dashboard() {
       console.error("Erro de rede ao excluir aposta:", error);
       alert("Ocorreu um erro de rede ao excluir aposta.");
     }
-  }
-
-  function editarAposta(aposta) {
-    setEditingBetId(aposta.id);
-    setSelectedDraw(aposta.drawId.toString());
-    setApostador(aposta.betor || "");
-    setAnimal(aposta.animal);
-    setTipoAposta(aposta.betType);
-    setValor(aposta.value.toString());
-    setNumero(aposta.number ? aposta.number.toString() : "");
   }
 
   function maximizar() {
@@ -280,9 +305,7 @@ function Dashboard() {
         {pages === 1 && (
           <Apostas
             apostas={apostas}
-            setApostas={setApostas}
             draws={draws}
-            setDraws={setDraws}
             selectedDraw={selectedDraw}
             setSelectedDraw={setSelectedDraw}
             selectedFilterDraw={selectedFilterDraw}
