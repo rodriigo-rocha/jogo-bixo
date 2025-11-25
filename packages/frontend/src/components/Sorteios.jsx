@@ -2,39 +2,15 @@ import { useCallback, useEffect, useState } from "react";
 import { useAuth } from "../context/AuthContext";
 import CardSorteio from "./CardSorteio";
 
-function Sorteios() {
+function Sorteios({ draws, fetchDraws }) {
   const { token } = useAuth();
   const [pages, setPages] = useState(0);
-  const [draws, setDraws] = useState([]);
   const [identifier, setIdentifier] = useState("");
   const [loading, setLoading] = useState(false);
 
   function trocaPagina(num) {
     setPages(num);
   }
-
-  const fetchDraws = useCallback(async () => {
-    if (!token) return;
-    try {
-      const response = await fetch("http://localhost:3000/game/results", {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-      if (response.ok) {
-        const data = await response.json();
-        setDraws(data);
-      } else {
-        console.error("Falha ao buscar sorteios");
-      }
-    } catch (error) {
-      console.error("Erro de rede ao buscar sorteios:", error);
-    }
-  }, [token]);
-
-  useEffect(() => {
-    fetchDraws();
-  }, [fetchDraws]);
 
   async function registrarSorteio() {
     if (!token || !identifier.trim()) {
@@ -58,7 +34,7 @@ function Sorteios() {
       if (response.ok) {
         const data = await response.json();
         console.log("Created draw response:", data);
-        setDraws((prev) => [data.draw, ...prev]);
+        fetchDraws(); // Atualiza os sorteios no Dashboard
         setIdentifier("");
         alert("Sorteio criado com sucesso!");
       } else {
