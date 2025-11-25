@@ -7,6 +7,7 @@ import { BaseHttpError } from "./error";
 import { authRoutes } from "./features/auth/auth.route";
 import { AuthService } from "./features/auth/auth.service";
 import { gameRoutes } from "./features/game/game.routes";
+import { performanceRoutes } from "./features/performance/performance.route";
 import { simulationCron } from "./features/simulation/simulation.cron";
 import { userRoutes } from "./features/users/users.route";
 import { UserService } from "./features/users/users.service";
@@ -92,7 +93,8 @@ app
   .use(userRoutes)
   .use(authRoutes)
   .use(gameRoutes)
-  .use(simulationCron)
+  .use(performanceRoutes)
+  // .use(simulationCron)
   .get(
     "/",
     () => ({
