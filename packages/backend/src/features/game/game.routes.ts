@@ -23,12 +23,15 @@ export const gameRoutes = new Elysia({
       name: "Gerar resultado",
       pattern: Patterns.everyMinutes(5),
       run: async () => {
+        // Temporariamente desabilitado para não interferir com sorteios manuais
+        /*
         const gameService = new GameService(db);
 
         const { winners, totalPaid, draw } = await gameService.executeDraw();
         logger.info(
           `${chalk.yellow(`[${draw}]`)} Sorteio realizado. ${chalk.green(winners)} vencedores (${chalk.red(`-R$${intToDecimal(totalPaid)}`)})`,
         );
+        */
       },
     }),
   )
@@ -52,12 +55,50 @@ export const gameRoutes = new Elysia({
     {
       verifyAuth: true,
       body: t.Object({
-        amount: t.Number({ minimum: 100 }),
-        type: t.Enum({ GRUPO: "GRUPO", DEZENA: "DEZENA", MILHAR: "MILHAR" }),
+        drawId: t.String(),
+        betor: t.String(),
+        amount: t.Number({ minimum: 1 }),
+        type: t.Enum({ GRUPO: "GRUPO", DEZENA: "DEZENA", CENTENA: "CENTENA", MILHAR: "MILHAR" }),
         selection: t.Number(),
       }),
       detail: {
         summary: "Realizar Aposta",
+        security: [{ bearerAuth: [] }],
+      },
+    },
+  )
+
+  .put(
+    "/bet/:id",
+    async ({ user, params, body, gameService }) => {
+      const bet = await gameService.updateBet(user!.id, params.id, body);
+      return { success: true, bet };
+    },
+    {
+      verifyAuth: true,
+      params: t.Object({ id: t.String() }),
+      body: t.Object({
+        amount: t.Optional(t.Number({ minimum: 100 })),
+        type: t.Optional(t.Enum({ GRUPO: "GRUPO", DEZENA: "DEZENA", CENTENA: "CENTENA", MILHAR: "MILHAR" })),
+        selection: t.Optional(t.Number()),
+      }),
+      detail: {
+        summary: "Editar Aposta (só se PENDING)",
+        security: [{ bearerAuth: [] }],
+      },
+    },
+  )
+
+  .delete(
+    "/bet/:id",
+    async ({ user, params, gameService }) => {
+      return await gameService.deleteBet(user!.id, params.id);
+    },
+    {
+      verifyAuth: true,
+      params: t.Object({ id: t.String() }),
+      detail: {
+        summary: "Excluir Aposta (só se PENDING, reembolsa saldo)",
         security: [{ bearerAuth: [] }],
       },
     },
@@ -112,6 +153,70 @@ export const gameRoutes = new Elysia({
         {
           isAdmin: true,
           detail: { summary: "Rodar Sorteio (Admin)" },
+        },
+      )
+
+      .post(
+        "/draw/:id/execute",
+        async ({ params, gameService }) => {
+          const result = await gameService.executeSpecificDraw(params.id);
+          return { message: "Sorteio realizado!", data: result };
+        },
+        {
+          isAdmin: true,
+          params: t.Object({ id: t.String() }),
+          detail: { summary: "Executar Sorteio Específico (Admin)" },
+        },
+      )
+
+      .post(
+        "/draw/open",
+        async ({ body, gameService }) => {
+          const draw = await gameService.createOpenDraw(body);
+          return { success: true, draw };
+        },
+        {
+          isAdmin: true,
+          body: t.Object({
+            number: t.Optional(t.String()),
+            city: t.Optional(t.String()),
+            temperature: t.Optional(t.Number()),
+            humidity: t.Optional(t.Number()),
+            windSpeed: t.Optional(t.Number()),
+          }),
+          detail: { summary: "Criar Sorteio Aberto (Admin)" },
+        },
+      )
+
+      .put(
+        "/draw/:id",
+        async ({ params, body, gameService }) => {
+          const draw = await gameService.updateDraw(params.id, body);
+          return { success: true, draw };
+        },
+        {
+          isAdmin: true,
+          params: t.Object({ id: t.String() }),
+          body: t.Object({
+            number: t.Optional(t.String()),
+            city: t.Optional(t.String()),
+            temperature: t.Optional(t.Number()),
+            humidity: t.Optional(t.Number()),
+            windSpeed: t.Optional(t.Number()),
+          }),
+          detail: { summary: "Editar Sorteio (só se OPEN)" },
+        },
+      )
+
+      .delete(
+        "/draw/:id",
+        async ({ params, gameService }) => {
+          return await gameService.deleteDraw(params.id);
+        },
+        {
+          isAdmin: true,
+          params: t.Object({ id: t.String() }),
+          detail: { summary: "Excluir Sorteio (só se OPEN e sem apostas)" },
         },
       )
 
