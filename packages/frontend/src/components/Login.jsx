@@ -81,7 +81,7 @@ function Login({ onClose }) {
       >
         {isRegistering && (
           <>
-            <label for="username">Nome de Usuário</label>
+            <label htmlFor="username">Nome de Usuário</label>
             <input
               id="username"
               type="text"
@@ -92,7 +92,7 @@ function Login({ onClose }) {
             />
           </>
         )}
-        <label for="email">E-mail</label>
+        <label htmlFor="email">E-mail</label>
         <input
           id="email"
           type="email"
@@ -101,7 +101,7 @@ function Login({ onClose }) {
           onChange={(e) => setEmail(e.target.value)}
           required
         />
-        <label for="password">Senha</label>
+        <label htmlFor="password">Senha</label>
         <input
           id="password"
           type="password"
@@ -112,7 +112,7 @@ function Login({ onClose }) {
         />
         {isRegistering && (
           <>
-            <label for="password-confirm">Confirmar Senha</label>
+            <label htmlFor="password-confirm">Confirmar Senha</label>
             <input
               id="password-confirm"
               type="password"
