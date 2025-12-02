@@ -6,7 +6,7 @@ import * as schema from "../schema";
 
 const sqlite = new Database("db.sqlite");
 
-const db = drizzle(sqlite, { schema });
+export const db = drizzle(sqlite, { schema });
 
 export type DbInstance = typeof db;
 

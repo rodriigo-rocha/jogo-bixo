@@ -4,18 +4,17 @@ import GraficoAposta from "./GraficoAposta";
 
 function Desempenho() {
   const { token } = useAuth();
-  const [selectedMonth, setSelectedMonth] = useState(
-    new Date().toISOString().slice(0, 7),
-  );
+  const [selectedMonth, setSelectedMonth] = useState(new Date().toISOString().slice(0, 7));
   const [performanceData, setPerformanceData] = useState(null);
   const [chartData, setChartData] = useState([]);
   const [totalDraws, setTotalDraws] = useState(0);
   const [openDraws, setOpenDraws] = useState(0);
+  const [openDrawsStats, setOpenDrawsStats] = useState({ totalBets: 0, totalValue: 0 });
 
   const fetchDrawsStats = useCallback(async () => {
     if (!token) return;
     try {
-      const response = await fetch("http://localhost:3000/draws", {
+      const response = await fetch("http://localhost:3000/game/results", {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -23,21 +22,45 @@ function Desempenho() {
       if (response.ok) {
         const draws = await response.json();
         setTotalDraws(draws.length);
-        setOpenDraws(draws.filter((draw) => draw.status === "open").length);
+        setOpenDraws(draws.filter((draw) => draw.status === "OPEN").length);
       }
     } catch (error) {
       console.error("Erro ao buscar estatísticas dos sorteios:", error);
     }
   }, [token]);
 
+  const fetchOpenDrawsStats = useCallback(async () => {
+    if (!token) return;
+    try {
+      const response = await fetch("http://localhost:3000/performance/open", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      if (response.ok) {
+        const stats = await response.json();
+        console.log("Open draws stats:", stats);
+        setOpenDrawsStats(stats);
+      } else {
+        console.log("Response not ok:", response.status);
+      }
+    } catch (error) {
+      console.error("Erro ao buscar estatísticas dos sorteios abertos:", error);
+    }
+  }, [token]);
+
   useEffect(() => {
     fetchDrawsStats();
+    fetchOpenDrawsStats();
 
     // Atualizar estatísticas a cada 10 segundos
-    const interval = setInterval(fetchDrawsStats, 10000);
+    const interval = setInterval(() => {
+      fetchDrawsStats();
+      fetchOpenDrawsStats();
+    }, 10000);
 
     return () => clearInterval(interval);
-  }, [fetchDrawsStats]);
+  }, [fetchDrawsStats, fetchOpenDrawsStats]);
 
   useEffect(() => {
     if (selectedMonth && token) {
@@ -54,6 +77,7 @@ function Desempenho() {
             const processedChartData = data.dailyPerformance.map((item) => ({
               ...item,
               day: parseInt(item.day, 10),
+              value: item.value / 100,
             }));
             setChartData(processedChartData);
           } else {
@@ -92,12 +116,12 @@ function Desempenho() {
       </div>
       <div className="pb-4 mb-5 rounded-md lg:mb-0 bg-blue-200 lg:w-[20%] text-start border-4 border-gray-400 shadow-lg shadow-gray-400/70 flex flex-col">
         <h2 className="text-xl text-center bg-gray-400 mb-4">Apostas Ativas</h2>
-        <span className="text-center">{performanceData?.totalBets || 0}</span>
+        <span className="text-center">{openDrawsStats.totalBets}</span>
       </div>
       <div className="pb-4 mb-5 rounded-md lg:mb-0 bg-blue-200 lg:w-[20%] text-start border-4 border-gray-400 shadow-lg shadow-gray-400/70 flex flex-col">
         <h2 className="text-xl text-center bg-gray-400 mb-4">Total Apostado</h2>
         <span className="text-center">
-          {formatCurrency(performanceData?.totalValue)}
+          {formatCurrency(openDrawsStats.totalValue / 100)}
         </span>
       </div>
       <div className="flex justify-center gap-20 w-full px-10 mt-5 items-center">

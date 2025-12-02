@@ -21,9 +21,19 @@ const CustomTooltip = ({ active, payload, label }) => {
   return null;
 };
 
-const GraficoAposta = ({ dadosApostas = [] }) => (
+const GraficoAposta = ({ dadosApostas = [] }) => {
+  if (dadosApostas.length === 0) {
+    return (
+      <div className="w-[100%] p-4 border-4 border-black bg-white shadow-retro-md h-96 shadow-lg shadow-gray-500 flex items-center justify-center">
+        <p className="text-xl">Nenhum dado disponível para o mês selecionado.</p>
+      </div>
+    );
+  }
+  console.log("Dados no gráfico:", dadosApostas);
+  return (
   <div className="w-[100%] p-4 border-4 border-black bg-white shadow-retro-md h-96 shadow-lg shadow-gray-500">
     <h2 className="text-xl font-bold mb-4">Valor Apostado por Dia do Mês</h2>
+    {console.log("Dados no gráfico:", dadosApostas)}
 
     <ResponsiveContainer width="100%" height="85%">
       <BarChart
@@ -54,7 +64,6 @@ const GraficoAposta = ({ dadosApostas = [] }) => (
           }}
         />
 
-        {/* 5. TOOLTIP: Usa o componente customizado definido acima */}
         <Tooltip content={<CustomTooltip />} />
 
         {/* 6. BARRAS: Customizar a cor, borda e stroke */}
@@ -68,5 +77,6 @@ const GraficoAposta = ({ dadosApostas = [] }) => (
     </ResponsiveContainer>
   </div>
 );
+};
 
 export default GraficoAposta;

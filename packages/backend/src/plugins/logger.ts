@@ -62,7 +62,13 @@ function createPinoInstance(): PinoLogger {
         process.stdout.write(`${logString}\n`);
         process.stdout.write(`${chalk.red(err.stack)}\n`);
       } else {
-        const { level, time, msg } = log;
+        const { level, time, msg, err } = log;
+        if (err?.type === "TypeError") {
+          process.stdout.write(
+            `${formatTime(time)} ${formatLevel(level)} ${chalk.white(err.message)}\n${chalk.red(err.stack)}`,
+          );
+          return;
+        }
         process.stdout.write(
           `${formatTime(time)} ${formatLevel(level)} ${chalk.white(msg)}\n`,
         );
@@ -79,8 +85,10 @@ interface StoreData {
   beforeTime: bigint;
 }
 
+export const logger = createPinoInstance();
+
 export const loggerPlugin = new Elysia({ name: "logger" })
-  .decorate("logger", createPinoInstance())
+  .decorate("logger", logger)
   .onStart(() => {
     console.log(`Running on localhost:3000`);
   })

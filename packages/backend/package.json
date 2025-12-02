@@ -11,9 +11,11 @@
   },
   "dependencies": {
     "@elysiajs/cors": "^1.4.0",
+    "@elysiajs/cron": "^1.4.1",
     "@elysiajs/jwt": "^1.4.0",
     "@elysiajs/node": "^1.4.2",
     "@elysiajs/openapi": "^1.4.11",
+    "@faker-js/faker": "^10.1.0",
     "@jogo-do-bixo/schema": "^1.0.0",
     "bcrypt": "^6.0.0",
     "better-sqlite3": "^12.4.1",
