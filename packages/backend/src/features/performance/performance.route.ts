@@ -19,10 +19,10 @@ export const performanceRoutes = new Elysia({
   })
   .get(
     "/",
-    async ({ query, performanceService }) => {
+    async ({ query, performanceService, user }) => {
       const { month } = query;
       console.log("Buscando performance para o mês:", month);
-      const result = await performanceService.getPerformance(month);
+      const result = await performanceService.getPerformance(month, user!.id);
       console.log("Resultado da performance:", result);
       return result;
     },
@@ -33,5 +33,12 @@ export const performanceRoutes = new Elysia({
           error: "O formato do mês deve ser YYYY-MM",
         }),
       }),
+    },
+  )
+  .get(
+    "/open",
+    async ({ performanceService, user }) => {
+      const result = await performanceService.getOpenDrawsStats(user!.id);
+      return result;
     },
   );

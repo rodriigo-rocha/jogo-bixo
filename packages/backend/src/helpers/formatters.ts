@@ -7,6 +7,17 @@ const timeUnits = [
   { unit: "ns", threshold: 1, decimalPlaces: 0 },
 ];
 
+// Transforma um inteiro em decimal
+// Exemplo: 1000 -> 10,00
+export function intToDecimal(int: number) {
+  const str = String(int);
+
+  return [
+    str.slice(0, -2).padStart(1, "0"),
+    str.slice(-2).padStart(2, "0"),
+  ].join(",");
+}
+
 export function formatDuration(nanoseconds: number): string {
   for (const { unit, threshold, decimalPlaces } of timeUnits) {
     if (nanoseconds >= threshold) {

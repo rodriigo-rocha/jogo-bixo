@@ -36,7 +36,8 @@ export const authRoutes = new Elysia({
           id: user.id,
           username: user.username,
           email: user.email,
-          avatar: user.pfp,
+          avatar: user.avatar_url,
+          balance: user.balance,
         },
       };
     },
@@ -91,7 +92,7 @@ export const authRoutes = new Elysia({
           id: user.id,
           username: user.username,
           email: user.email,
-          avatar: user.pfp,
+          avatar: user.avatar_url,
         },
       };
     },

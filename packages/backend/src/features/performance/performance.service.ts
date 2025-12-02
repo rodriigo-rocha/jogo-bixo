@@ -1,9 +1,39 @@
 import { sql } from "drizzle-orm";
 import type { DbInstance } from "../../plugins/db";
-import { bets } from "../../schema";
+import { bets, draws } from "../../schema";
 
 export class PerformanceService {
-  constructor(private db: DbInstance) {}
+  constructor(private db: DbInstance) { }
+
+  async getOpenDrawsStats(userId: string) {
+    console.log("Buscando stats para userId:", userId);
+    // Get open draws
+    const openDraws = await this.db
+      .select({ id: draws.id })
+      .from(draws)
+      .where(sql`${draws.status} = 'OPEN'`);
+    console.log("Open draws:", openDraws);
+
+    const openDrawIds = openDraws.map(d => d.id);
+    console.log("Open draw IDs:", openDrawIds);
+
+    if (openDrawIds.length === 0) {
+      console.log("No open draws");
+      return { totalBets: 0, totalValue: 0 };
+    }
+
+    // Get bets for open draws by this user
+    const result = await this.db
+      .select({
+        totalValue: sql<number>`coalesce(sum(${bets.amount}), 0)`.mapWith(Number),
+        totalBets: sql<number>`count(${bets.id})`.mapWith(Number),
+      })
+      .from(bets)
+      .where(sql`${bets.userId} = ${userId} and ${bets.drawId} in (${sql.join(openDrawIds, sql`, `)}) and ${bets.status} = 'PENDING'`);
+    console.log("Result:", result);
+
+    return result[0] ?? { totalValue: 0, totalBets: 0 };
+  }
 
   async getPerformance(month: string) {
     console.log("Mês recebido:", month);
@@ -31,7 +61,7 @@ export class PerformanceService {
 
     const result = await this.db
       .select({
-        totalValue: sql<number>`coalesce(sum(${bets.value}), 0)`.mapWith(
+        totalValue: sql<number>`coalesce(sum(${bets.amount}), 0)`.mapWith(
           Number,
         ),
         totalBets: sql<number>`count(${bets.id})`.mapWith(Number),
@@ -46,7 +76,7 @@ export class PerformanceService {
     const dailyPerformance = await this.db
       .select({
         day: sql<string>`strftime('%d', ${bets.createdAt}, 'unixepoch')`,
-        value: sql<number>`sum(${bets.value})`.mapWith(Number),
+        value: sql<number>`sum(${bets.amount})`.mapWith(Number),
       })
       .from(bets)
       .where(

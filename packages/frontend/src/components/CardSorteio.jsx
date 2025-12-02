@@ -6,37 +6,7 @@ function CardSorteio({ drawId, identificador, status, onStatusChange }) {
   const [totalValue, setTotalValue] = useState(0);
 
   useEffect(() => {
-    async function fetchTotalValue() {
-      if (!token) return;
-      try {
-        const response = await fetch(
-          `http://localhost:3000/bets/draw/${drawId}/total`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          },
-        );
-        if (response.ok) {
-          const data = await response.json();
-          setTotalValue(data.total);
-        }
-      } catch (error) {
-        console.error("Erro ao buscar valor total:", error);
-      }
-    }
-
-    fetchTotalValue(); // Buscar valor total inicialmente
-
-    // Se o sorteio estiver aberto, buscar valor a cada 3 segundos
-    let interval;
-    if (status === "open") {
-      interval = setInterval(fetchTotalValue, 3000);
-    }
-
-    return () => {
-      if (interval) clearInterval(interval);
-    };
+    setTotalValue(0);
   }, [token, drawId, status]);
 
   async function fecharSorteio() {
@@ -45,17 +15,11 @@ function CardSorteio({ drawId, identificador, status, onStatusChange }) {
       return;
     }
 
-    if (
-      !window.confirm(`Deseja realmente fechar o sorteio ${identificador}?`)
-    ) {
-      return;
-    }
-
     try {
       const response = await fetch(
-        `http://localhost:3000/draws/${identificador}/close`,
+        `http://localhost:3000/game/admin/draw/${drawId}/execute`,
         {
-          method: "PATCH",
+          method: "POST",
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -75,8 +39,81 @@ function CardSorteio({ drawId, identificador, status, onStatusChange }) {
     }
   }
 
-  const statusText = status === "open" ? "Aberta" : "Encerrado";
-  const statusColor = status === "open" ? "bg-green-500" : "bg-red-500";
+  async function editarSorteio() {
+    if (!token) {
+      alert("Você precisa estar logado");
+      return;
+    }
+
+    const novoNumero = prompt("Digite o novo número do sorteio:", identificador);
+    if (!novoNumero || novoNumero.trim() === "") return;
+
+    try {
+      const response = await fetch(
+        `http://localhost:3000/game/admin/draw/${drawId}`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            number: novoNumero.trim(),
+          }),
+        },
+      );
+
+      if (response.ok) {
+        alert("Sorteio editado com sucesso!");
+        if (onStatusChange) onStatusChange();
+      } else {
+        const errorData = await response.json();
+        alert(`Erro ao editar sorteio: ${errorData.message}`);
+      }
+    } catch (error) {
+      console.error("Erro de rede ao editar sorteio:", error);
+      alert("Ocorreu um erro de rede");
+    }
+  }
+
+  async function excluirSorteio() {
+    if (!token) {
+      alert("Você precisa estar logado");
+      return;
+    }
+
+    if (
+      !window.confirm(`Deseja realmente excluir o sorteio ${identificador}?`)
+    ) {
+      return;
+    }
+
+    try {
+      const response = await fetch(
+        `http://localhost:3000/game/admin/draw/${drawId}`,
+        {
+          method: "DELETE",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        },
+      );
+
+      if (response.ok) {
+        alert("Sorteio excluído com sucesso!");
+        if (onStatusChange) onStatusChange();
+      } else {
+        const errorData = await response.json();
+        alert(`Erro ao excluir sorteio: ${errorData.message}`);
+      }
+    } catch (error) {
+      console.error("Erro de rede ao excluir sorteio:", error);
+      alert("Ocorreu um erro de rede");
+    }
+  }
+
+  const statusText = status === "OPEN" ? "Aberta" : "Encerrado";
+  const statusColor = status === "OPEN" ? "bg-green-500" : "bg-red-500";
 
   return (
     <div className="bg-gray-400 w-[98%] shadow-inner px-4 shadow-gray-300 flex flex-col py-2">
@@ -96,15 +133,31 @@ function CardSorteio({ drawId, identificador, status, onStatusChange }) {
           Valor Total: R${totalValue.toFixed(2)}
         </span>
       </div>
-      {status === "open" && (
+      {status === "OPEN" && (
         <button
           type="button"
           onClick={fecharSorteio}
-          className="bg-blue-950 text-white text-lg w-50 cursor-pointer hover:bg-blue-900 active:bg-blue-800 active:text-indigo-100"
+          className="bg-yellow-600 text-white text-lg px-2 py-1 cursor-pointer hover:bg-yellow-500 active:bg-yellow-400 active:text-black border-black border-2 rounded-md"
         >
-          Fechar Sorteio
+          🎲 Realizar Sorteio
         </button>
       )}
+      <div className="flex gap-2 mt-2">
+        <button
+          type="button"
+          onClick={editarSorteio}
+          className="bg-green-600 text-white px-2 py-1 border-black border-2 rounded-md hover:bg-green-500 flex items-center text-lg"
+        >
+          Editar
+        </button>
+        <button
+          type="button"
+          onClick={excluirSorteio}
+          className="bg-red-600 text-white px-2 py-1 border-black border-2 rounded-md hover:bg-red-500 flex items-center text-lg"
+        >
+          Excluir
+        </button>
+      </div>
     </div>
   );
 }

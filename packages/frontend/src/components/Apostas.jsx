@@ -21,6 +21,40 @@ function Apostas({
   deletarAposta,
   editarAposta,
 }) {
+  const openDraws = draws.filter((draw) => draw.status === "OPEN");
+
+  const animals = [
+    "Avestruz",
+    "Águia",
+    "Burro",
+    "Borboleta",
+    "Cachorro",
+    "Cabra",
+    "Carneiro",
+    "Camelo",
+    "Cobra",
+    "Coelho",
+    "Cavalo",
+    "Elefante",
+    "Galo",
+    "Gato",
+    "Jacaré",
+    "Leão",
+    "Macaco",
+    "Porco",
+    "Pavão",
+    "Peru",
+    "Touro",
+    "Tigre",
+    "Urso",
+    "Veado",
+    "Vaca",
+  ];
+
+  const getAnimalGroup = (dezena) => {
+    if (dezena === 0) return 25;
+    return Math.ceil(dezena / 4);
+  };
   return (
     <div className="p-4 text-center text-3xl overflow-y-auto max-h-[83.5dvh] flex-col lg:flex justify-center lg:justify-between flex-wrap px-[5%] py-[5%]">
       <div className="pb-4 mb-5 lg:mb-0 bg-blue-200 lg:w-[40%] text-start border-4 border-gray-400 shadow-lg shadow-gray-400/70">
@@ -35,13 +69,11 @@ function Apostas({
             className="w-[70%] bg-white shadow-gray-300 shadow-inner px-2 border border-gray-600 mb-3"
           >
             <option value="">Selecione um sorteio</option>
-            {draws
-              .filter((d) => d.status === "open")
-              .map((draw) => (
-                <option key={draw.id} value={draw.id}>
-                  {draw.identifier}
-                </option>
-              ))}
+            {openDraws.map((draw) => (
+              <option key={draw.id} value={draw.id}>
+                {draw.number} - {draw.status === "OPEN" ? "Aberto" : "Encerrado"}
+              </option>
+            ))}
           </select>
           <span>Apostador</span>
           <input
@@ -151,9 +183,9 @@ function Apostas({
             className="w-[30%] bg-white shadow-gray-300 shadow-inner px-2 border border-gray-600 mb-3 text-sm"
           >
             <option value="">Todos os sorteios</option>
-            {draws.map((draw) => (
+            {openDraws.map((draw) => (
               <option key={draw.id} value={draw.id}>
-                {draw.identifier}
+                {draw.number} - {draw.status === "OPEN" ? "Aberto" : "Encerrado"}
               </option>
             ))}
           </select>
@@ -161,9 +193,9 @@ function Apostas({
             {(() => {
               const apostasFiltradas = selectedFilterDraw
                 ? apostas.filter(
-                    (aposta) =>
-                      aposta.drawId === parseInt(selectedFilterDraw, 10),
-                  )
+                  (aposta) =>
+                    aposta.drawId === selectedFilterDraw,
+                )
                 : apostas;
               return apostasFiltradas.map((aposta) => (
                 <div
@@ -175,20 +207,20 @@ function Apostas({
                       <b>Apostador:</b> {aposta.betor || "N/A"}
                     </p>
                     <p>
-                      <b>Sorteio:</b> {aposta.draw?.identifier || "N/A"}
+                      <b>Sorteio:</b> {aposta.draw?.number || "N/A"}
                     </p>
                     <p>
-                      <b>Animal:</b> {aposta.animal}
+                      <b>Animal:</b> {aposta.type === "GRUPO" ? animals[aposta.selection - 1] : aposta.type === "DEZENA" ? animals[getAnimalGroup(aposta.selection) - 1] : aposta.type === "CENTENA" ? animals[getAnimalGroup(aposta.selection % 100) - 1] : aposta.type === "MILHAR" ? animals[getAnimalGroup(aposta.selection % 100) - 1] : "N/A"}
                     </p>
                     <p>
-                      <b>Tipo:</b> {aposta.betType}
+                      <b>Tipo:</b> {aposta.type.toLowerCase()}
                     </p>
                     <p>
-                      <b>Valor:</b> R$ {parseFloat(aposta.value).toFixed(2)}
+                      <b>Valor:</b> R$ {parseFloat(aposta.amount / 100).toFixed(2)}
                     </p>
-                    {aposta.number != null && (
+                    {aposta.type !== "GRUPO" && (
                       <p>
-                        <b>Número:</b> {aposta.number}
+                        <b>Número:</b> {aposta.selection}
                       </p>
                     )}
                   </div>
