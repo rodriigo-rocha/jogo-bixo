@@ -1,14 +1,25 @@
-import { and, eq, gte, lte, type SQL, sql, desc } from "drizzle-orm";
+import { and, desc, eq, gte, lte, type SQL, sql } from "drizzle-orm";
 import { uuidv7 } from "uuidv7";
 import { type CreateBet, GAME_ODDS } from "../../../../schema/src/game";
 import { BadRequestError, NotFoundError } from "../../error";
-import { checkVictory, getAnimalGroup, getAnimalName } from "../../helpers/game-rules";
+import {
+  checkVictory,
+  getAnimalGroup,
+  getAnimalName,
+} from "../../helpers/game-rules";
 import { getRandomWeather } from "../../helpers/weather";
 import type { DbInstance } from "../../plugins/db";
-import { type BetsStatus, bets, draws, type TransactionType, transactions, users } from "../../schema";
+import {
+  type BetsStatus,
+  bets,
+  draws,
+  type TransactionType,
+  transactions,
+  users,
+} from "../../schema";
 
 export class GameService {
-  constructor(private db: DbInstance) { }
+  constructor(private db: DbInstance) {}
 
   async logTransaction(
     userId: string,
@@ -35,7 +46,10 @@ export class GameService {
     });
   }
 
-  async placeBet(userId: string, data: CreateBet & { betor?: string; drawId?: string }) {
+  async placeBet(
+    userId: string,
+    data: CreateBet & { betor?: string; drawId?: string },
+  ) {
     if (data.type === "GRUPO" && (data.selection < 1 || data.selection > 25)) {
       throw new BadRequestError(
         "Para apostas em GRUPO, o número deve ser entre 1 e 25 (Bichos).",
@@ -55,7 +69,8 @@ export class GameService {
       where: eq(draws.id, data.drawId),
     });
     if (!draw) throw new NotFoundError("Sorteio não encontrado");
-    if (draw.status !== "OPEN") throw new BadRequestError("Sorteio não está aberto para apostas");
+    if (draw.status !== "OPEN")
+      throw new BadRequestError("Sorteio não está aberto para apostas");
 
     // Desconta Saldo
     const newBalance = user.balance - data.amount;
@@ -188,7 +203,9 @@ export class GameService {
         humidity: draws.humidity,
         windSpeed: draws.windSpeed,
         createdAt: draws.createdAt,
-        totalValue: sql<number>`coalesce(sum(${bets.amount}), 0)`.mapWith(Number),
+        totalValue: sql<number>`coalesce(sum(${bets.amount}), 0)`.mapWith(
+          Number,
+        ),
       })
       .from(draws)
       .leftJoin(bets, eq(draws.id, bets.drawId))
@@ -253,14 +270,36 @@ export class GameService {
     });
 
     if (!bet) throw new NotFoundError("Aposta não encontrada");
-    if (bet.status !== "PENDING") throw new BadRequestError("Aposta já processada, não pode ser editada");
+    if (bet.status !== "PENDING")
+      throw new BadRequestError("Aposta já processada, não pode ser editada");
 
     // Validar dados
-    if (data.type) {
-      if (data.type === "GRUPO" && (data.selection! < 1 || data.selection! > 25)) {
-        throw new BadRequestError("Para apostas em GRUPO, o número deve ser entre 1 e 25.");
-      }
+    if (data.selection! < 0)
+      throw new BadRequestError("O número tem que ser positivo");
+
+    if (
+      data.type === "GRUPO" &&
+      (data.selection! < 1 || data.selection! > 25)
+    ) {
+      throw new BadRequestError(
+        "Para apostas em GRUPO, o número deve ser entre 1 e 25.",
+      );
     }
+
+    if (data.type === "DEZENA" && data.selection! > 99)
+      throw new BadRequestError(
+        "Para apostas em DEZENA, o número deve ser entre 0 e 99.",
+      );
+
+    if (data.type === "CENTENA" && data.selection! > 999)
+      throw new BadRequestError(
+        "Para apostas em CENTENA, o número deve ser entre 0 e 999.",
+      );
+
+    if (data.type === "MILHAR" && data.selection! > 9999)
+      throw new BadRequestError(
+        "Para apostas em MILHAR, o número deve ser entre 0 e 9999.",
+      );
 
     const updateData: Partial<typeof bet> = {};
     if (data.amount !== undefined) updateData.amount = data.amount * 100;
@@ -287,26 +326,48 @@ export class GameService {
     });
 
     if (!bet) throw new NotFoundError("Aposta não encontrada");
-    if (bet.status !== "PENDING") throw new BadRequestError("Aposta já processada, não pode ser excluída");
+    if (bet.status !== "PENDING")
+      throw new BadRequestError("Aposta já processada, não pode ser excluída");
 
     // Reembolsar saldo
-    await this.db.update(users).set({
-      balance: sql`${users.balance} + ${bet.amount}`,
-    }).where(eq(users.id, userId));
+    await this.db
+      .update(users)
+      .set({
+        balance: sql`${users.balance} + ${bet.amount}`,
+      })
+      .where(eq(users.id, userId));
 
     // Deletar aposta
     await this.db.delete(bets).where(eq(bets.id, betId));
 
     // Log reembolso
-    await this.logTransaction(userId, "REFUND", bet.amount, `Reembolso: Aposta ${bet.type} excluída`, betId);
+    await this.logTransaction(
+      userId,
+      "REFUND",
+      bet.amount,
+      `Reembolso: Aposta ${bet.type} excluída`,
+      betId,
+    );
 
     return { success: true };
   }
 
-  async createOpenDraw(data: Partial<{ number: string; city: string; temperature: number; humidity: number; windSpeed: number }>) {
+  async createOpenDraw(
+    data: Partial<{
+      number: string;
+      city: string;
+      temperature: number;
+      humidity: number;
+      windSpeed: number;
+    }>,
+  ) {
     const drawData = {
       id: uuidv7(),
-      number: data.number || Math.floor(Math.random() * 10000).toString().padStart(4, "0"),
+      number:
+        data.number ||
+        Math.floor(Math.random() * 10000)
+          .toString()
+          .padStart(4, "0"),
       status: "OPEN" as const,
       city: data.city,
       temperature: data.temperature,
@@ -322,13 +383,23 @@ export class GameService {
     return newDraw;
   }
 
-  async updateDraw(drawId: string, data: Partial<{ number: string; city: string; temperature: number; humidity: number; windSpeed: number }>) {
+  async updateDraw(
+    drawId: string,
+    data: Partial<{
+      number: string;
+      city: string;
+      temperature: number;
+      humidity: number;
+      windSpeed: number;
+    }>,
+  ) {
     const draw = await this.db.query.draws.findFirst({
       where: eq(draws.id, drawId),
     });
 
     if (!draw) throw new NotFoundError("Sorteio não encontrado");
-    if (draw.status !== "OPEN") throw new BadRequestError("Sorteio já fechado, não pode ser editado");
+    if (draw.status !== "OPEN")
+      throw new BadRequestError("Sorteio já fechado, não pode ser editado");
 
     await this.db.update(draws).set(data).where(eq(draws.id, drawId));
 
@@ -350,10 +421,16 @@ export class GameService {
         where: eq(bets.drawId, drawId),
       });
 
-      if (associatedBets.length > 0) throw new BadRequestError("Não pode excluir sorteio aberto com apostas associadas");
+      if (associatedBets.length > 0)
+        throw new BadRequestError(
+          "Não pode excluir sorteio aberto com apostas associadas",
+        );
     } else {
       // Para sorteios fechados, remover a referência das apostas antes de excluir
-      await this.db.update(bets).set({ drawId: null }).where(eq(bets.drawId, drawId));
+      await this.db
+        .update(bets)
+        .set({ drawId: null })
+        .where(eq(bets.drawId, drawId));
     }
 
     await this.db.delete(draws).where(eq(draws.id, drawId));
