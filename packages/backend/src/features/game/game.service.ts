@@ -1,22 +1,11 @@
-import { and, eq, gte, lte, type SQL, sql } from "drizzle-orm";
+import { and, eq, gte, lte, type SQL, sql, desc } from "drizzle-orm";
 import { uuidv7 } from "uuidv7";
 import { type CreateBet, GAME_ODDS } from "../../../../schema/src/game";
 import { BadRequestError, NotFoundError } from "../../error";
-import {
-  checkVictory,
-  getAnimalGroup,
-  getAnimalName,
-} from "../../helpers/game-rules";
+import { checkVictory, getAnimalGroup, getAnimalName } from "../../helpers/game-rules";
 import { getRandomWeather } from "../../helpers/weather";
 import type { DbInstance } from "../../plugins/db";
-import {
-  type BetsStatus,
-  bets,
-  draws,
-  type TransactionType,
-  transactions,
-  users,
-} from "../../schema";
+import { type BetsStatus, bets, draws, type TransactionType, transactions, users } from "../../schema";
 
 export class GameService {
   constructor(private db: DbInstance) { }
@@ -189,10 +178,25 @@ export class GameService {
 
   async getLatestDraws() {
     // Priorizar sorteios abertos primeiro, depois os mais recentes
-    return await this.db.query.draws.findMany({
-      orderBy: (draws, { asc, desc }) => [desc(draws.status), desc(draws.createdAt)],
-      limit: 20, // Aumentar limite para mostrar mais sorteios
-    });
+    const result = await this.db
+      .select({
+        id: draws.id,
+        number: draws.number,
+        status: draws.status,
+        city: draws.city,
+        temperature: draws.temperature,
+        humidity: draws.humidity,
+        windSpeed: draws.windSpeed,
+        createdAt: draws.createdAt,
+        totalValue: sql<number>`coalesce(sum(${bets.amount}), 0)`.mapWith(Number),
+      })
+      .from(draws)
+      .leftJoin(bets, eq(draws.id, bets.drawId))
+      .groupBy(draws.id)
+      .orderBy(desc(draws.status), desc(draws.createdAt))
+      .limit(20);
+
+    return result;
   }
 
   async getUserBets(userId: string, page = 0) {

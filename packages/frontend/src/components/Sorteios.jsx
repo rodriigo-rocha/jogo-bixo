@@ -8,6 +8,10 @@ function Sorteios({ draws, fetchDraws }) {
   const [identifier, setIdentifier] = useState("");
   const [loading, setLoading] = useState(false);
 
+  useEffect(() => {
+    fetchDraws();
+  }, [fetchDraws]);
+
   function trocaPagina(num) {
     setPages(num);
   }
@@ -34,7 +38,7 @@ function Sorteios({ draws, fetchDraws }) {
       if (response.ok) {
         const data = await response.json();
         console.log("Created draw response:", data);
-        fetchDraws(); // Atualiza os sorteios no Dashboard
+        fetchDraws();
         setIdentifier("");
         alert("Sorteio criado com sucesso!");
       } else {
@@ -49,8 +53,9 @@ function Sorteios({ draws, fetchDraws }) {
     }
   }
 
-  const filteredDraws = draws.filter((draw) => {
-    if (pages === 0) return true; // Todas
+  const safeDraws = Array.isArray(draws) ? draws : [];
+  const filteredDraws = safeDraws.filter((draw) => {
+    if (pages === 0) return true;
     if (pages === 1) return draw.status === "OPEN";
     if (pages === 2) return draw.status === "CLOSED";
     return true;
@@ -119,6 +124,8 @@ function Sorteios({ draws, fetchDraws }) {
                   drawId={draw.id}
                   identificador={draw.number}
                   status={draw.status}
+                  createdAt={draw.createdAt}
+                  totalValue={draw.totalValue / 100}
                   onStatusChange={fetchDraws}
                 />
               ))
