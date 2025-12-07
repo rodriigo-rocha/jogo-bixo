@@ -1,5 +1,6 @@
 import { int, sqliteTable, text } from "drizzle-orm/sqlite-core";
 
+// Define a tabela de usuários no banco de dados SQLite
 export const users = sqliteTable("users", {
   id: text("id").primaryKey(),
   username: text("username").notNull(),

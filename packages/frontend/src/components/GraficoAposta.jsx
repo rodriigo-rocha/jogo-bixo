@@ -1,13 +1,6 @@
-import {
-  Bar,
-  BarChart,
-  CartesianGrid,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
-} from "recharts";
+import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 
+// Componente de tooltip customizado para exibir informações detalhadas ao passar o mouse sobre as barras
 const CustomTooltip = ({ active, payload, label }) => {
   if (active && payload && payload.length) {
     // Exemplo de classes retro Tailwind:
@@ -29,7 +22,7 @@ const GraficoAposta = ({ dadosApostas = [] }) => {
       </div>
     );
   }
-  console.log("Dados no gráfico:", dadosApostas);
+  console.log("Dados no gráfico:", dadosApostas); // Verificação dos dados recebidos
   return (
   <div className="w-[100%] p-4 border-4 border-black bg-white shadow-retro-md h-96 shadow-lg shadow-gray-500">
     <h2 className="text-xl font-bold mb-4">Valor Apostado por Dia do Mês</h2>

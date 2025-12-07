@@ -17,12 +17,12 @@ export const performanceRoutes = new Elysia({
       throw new UnauthorizedError("Acesso não autorizado");
     }
   })
-  .get(
-    "/",
-    async ({ query, performanceService, user }) => {
+  
+  // Buscar performance de apostas em um mês específico
+  .get( "/", async ({ query, performanceService, user }) => {
       const { month } = query;
       console.log("Buscando performance para o mês:", month);
-      const result = await performanceService.getPerformance(month, user!.id);
+      const result = await performanceService.getPerformance(month);
       console.log("Resultado da performance:", result);
       return result;
     },
@@ -35,9 +35,9 @@ export const performanceRoutes = new Elysia({
       }),
     },
   )
-  .get(
-    "/open",
-    async ({ performanceService, user }) => {
+
+  // Buscar estatísticas de apostas em sorteios abertos para um usuário
+  .get( "/open", async ({ performanceService, user }) => {
       const result = await performanceService.getOpenDrawsStats(user!.id);
       return result;
     },

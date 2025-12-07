@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { useNotification } from "./Notification";
 
+// Componente de Login e Registro
 function Login({ onClose }) {
   const [isRegistering, setIsRegistering] = useState(false);
   const [email, setEmail] = useState("");
@@ -13,6 +14,7 @@ function Login({ onClose }) {
   const { login } = useAuth();
   const { addNotification } = useNotification();
 
+  // Função para lidar com login e registro
   async function handleAuth(e) {
     e.preventDefault();
     const url = `http://localhost:3000/auth/${isRegistering ? "register" : "login"}`;
@@ -36,7 +38,7 @@ function Login({ onClose }) {
 
       if (response.ok) {
         const { token, user } = await response.json();
-        login(user, token); // Salva o usuário e o token no contexto
+        login(user, token);
         addNotification(
           "success",
           `Bem-vindo, ${user.username}!`,

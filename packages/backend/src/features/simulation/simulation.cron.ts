@@ -9,24 +9,23 @@ const simulationService = new SimulationService(db);
   await simulationService.ensureBots(20);
 })();
 
+// Cron job para simular apostas de bots periodicamente
 export const simulationCron = new Elysia()
-  // Faz um bot aleatório jogar.
   .use(
     cron({
       name: "Bot Betting",
-      pattern: "*/10 * * * * *", // A cada 10 segundos
+      pattern: "*/10 * * * * *",
       run: async () => {
         await simulationService.simulateRandomBet();
 
         // 30% de chance de ter uma segunda aposta no mesmo ciclo
         if (Math.random() > 0.7) {
-          await simulationService.simulateRandomBet();
+          await simulationService.simulateRandomBet(); // Simula uma segunda aposta aleatória
         }
       },
     }),
   )
 
-  // Endpoint para forçar simulação
   .get("/simulation/force-bet", async () => {
     await simulationService.ensureBots(5);
     await simulationService.simulateRandomBet();

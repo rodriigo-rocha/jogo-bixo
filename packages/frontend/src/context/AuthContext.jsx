@@ -3,19 +3,17 @@ import { createContext, useContext, useEffect, useState } from "react";
 const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
-  const [user, setUser] = useState(null);
-  const [token, setToken] = useState(localStorage.getItem("token"));
+  const [user, setUser] = useState(null); // Estado para armazenar os dados do usuário
+  const [token, setToken] = useState(localStorage.getItem("token")); // Estado para armazenar o token de autenticação
 
   useEffect(() => {
-    // Se houver um token, podemos buscar os dados do usuário
-    // ou decodificar o token para obter os dados.
-    // Por simplicidade, vamos armazenar o objeto do usuário no localStorage também.
-    const storedUser = localStorage.getItem("user");
-    if (storedUser) {
+    const storedUser = localStorage.getItem("user"); // Buscar dados do usuário do localStorage
+    if (storedUser) // Verificar se há dados armazenados
       setUser(JSON.parse(storedUser));
-    }
+
   }, []);
 
+  // Função para fazer login
   const login = (userData, authToken) => {
     localStorage.setItem("user", JSON.stringify(userData));
     localStorage.setItem("token", authToken);
@@ -23,6 +21,7 @@ export function AuthProvider({ children }) {
     setToken(authToken);
   };
 
+  // Função para fazer logout
   const logout = () => {
     localStorage.removeItem("user");
     localStorage.removeItem("token");
@@ -30,6 +29,7 @@ export function AuthProvider({ children }) {
     setToken(null);
   };
 
+  // Prover o contexto de autenticação para os componentes filhos
   return (
     <AuthContext.Provider value={{ user, token, login, logout }}>
       {children}

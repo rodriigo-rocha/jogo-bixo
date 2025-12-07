@@ -18,6 +18,7 @@ export function intToDecimal(int: number) {
   ].join(",");
 }
 
+// Formata uma duração em nanosegundos para uma string legível
 export function formatDuration(nanoseconds: number): string {
   for (const { unit, threshold, decimalPlaces } of timeUnits) {
     if (nanoseconds >= threshold) {

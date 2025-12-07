@@ -11,9 +11,11 @@ function Desktop() {
   function clique() {
     setClicado(!clicado);
   }
+
   function infoClique() {
     setInfo(!info);
   }
+  
   function cinemaClique() {
     setCinema(!cinema);
   }

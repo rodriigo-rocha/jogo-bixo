@@ -19,9 +19,9 @@ export const authRoutes = new Elysia({
       userService,
     };
   })
-  .post(
-    "/register",
-    async ({ authService, jwt, body, set }) => {
+
+  // Registro de novo usuário
+  .post("/register", async ({ authService, jwt, body, set }) => {
       const user = await authService.register(body);
 
       const token = await jwt.sign({
@@ -76,10 +76,10 @@ export const authRoutes = new Elysia({
       },
     },
   )
-  .post(
-    "/login",
-    async ({ authService, jwt, body }) => {
-      const user = await authService.login(body);
+
+  // Login de usuário
+  .post("/login", async ({ authService, jwt, body }) => {
+      const user = await authService.login(body)
 
       const token = await jwt.sign({
         id: user.id,

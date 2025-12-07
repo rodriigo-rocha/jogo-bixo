@@ -10,12 +10,12 @@ export class AuthService {
     this.userService = userService;
   }
 
+  // Registrar um novo usuário
   async register(data: Register) {
     const existing = await this.userService.findByEmail(data.email);
 
-    if (existing) {
+    if (existing)
       throw new ConflictError("Este email já está em uso");
-    }
 
     const password = await bcrypt.hash(data.password, 10);
 
@@ -33,13 +33,12 @@ export class AuthService {
     return user;
   }
 
+  // Garante que exista um usuário admin padrão
   async ensureDefaultAdmin() {
     const adminEmail = "admin@bicho.com";
 
     const existing = await this.userService.findByEmail(adminEmail);
-    if (existing) {
-      return;
-    }
+    if (existing) return;
 
     const hashedPassword = await bcrypt.hash("admin123", 10);
 
@@ -53,18 +52,22 @@ export class AuthService {
     });
   }
 
+  // Autentica um usuário
   async login(data: Login) {
     const user = await this.userService.findByEmail(data.email);
-
-    if (!user) throw new UnauthorizedError("Credenciais inválidas");
+    
+    if (!user) 
+      throw new UnauthorizedError("Credenciais inválidas");
 
     const passwordMatch = await bcrypt.compare(data.password, user.password);
 
-    if (!passwordMatch) throw new UnauthorizedError("Credenciais inválidas");
+    if (!passwordMatch) 
+      throw new UnauthorizedError("Credenciais inválidas");
 
     return user;
   }
 
+  // Busca um avatar aleatório
   async getRandomAvatar() {
     try {
       // API de raposas aleatórias

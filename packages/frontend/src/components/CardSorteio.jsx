@@ -3,6 +3,7 @@ import { useAuth } from "../context/AuthContext";
 function CardSorteio({ drawId, identificador, status, onStatusChange, totalValue, createdAt }) {
   const { token } = useAuth();
 
+  // Função para fechar o sorteio
   async function fecharSorteio() {
     if (!token) {
       alert("Você precisa estar logado");
@@ -20,7 +21,8 @@ function CardSorteio({ drawId, identificador, status, onStatusChange, totalValue
 
       if (response.ok) {
         alert("Sorteio fechado com sucesso!");
-        if (onStatusChange) onStatusChange();
+        if (onStatusChange) 
+          onStatusChange();
       } else {
         const errorData = await response.json();
         alert(`Erro ao fechar sorteio: ${errorData.message}`);
@@ -31,6 +33,7 @@ function CardSorteio({ drawId, identificador, status, onStatusChange, totalValue
     }
   }
 
+  // Função para editar o sorteio
   async function editarSorteio() {
     if (!token) {
       alert("Você precisa estar logado");
@@ -87,7 +90,8 @@ function CardSorteio({ drawId, identificador, status, onStatusChange, totalValue
 
       if (response.ok) {
         alert("Sorteio excluído com sucesso!");
-        if (onStatusChange) onStatusChange();
+        if (onStatusChange) 
+          onStatusChange();
       } else {
         const errorData = await response.json();
         alert(`Erro ao excluir sorteio: ${errorData.message}`);

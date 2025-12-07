@@ -27,8 +27,10 @@ function Dashboard() {
   const [editingBetId, setEditingBetId] = useState(null);
   const hasFetchedRef = useRef(false);
 
+  // Funções para buscar dados do backend
   const fetchDraws = useCallback(async () => {
     if (!token) return;
+
     try {
       const response = await fetch("http://localhost:3000/game/results", {
         headers: {
@@ -39,9 +41,8 @@ function Dashboard() {
         const data = await response.json();
         setDraws(data);
         const openDraw = data.find((d) => d.status === "OPEN");
-        if (openDraw) {
+        if (openDraw) // Seleciona o sorteio aberto por padrão
           setSelectedDraw(openDraw.id.toString());
-        }
       } else {
         console.error("Falha ao buscar sorteios");
       }
@@ -50,8 +51,10 @@ function Dashboard() {
     }
   });
 
+  // Buscar apostas do usuário
   const fetchApostas = useCallback(async () => {
-    if (!user || !token) return; // Não faz nada se não houver usuário ou token
+    if (!user || !token) return;
+
     try {
       const response = await fetch("http://localhost:3000/game/my-bets", {
         headers: {
@@ -69,7 +72,8 @@ function Dashboard() {
       console.error("Erro de rede ao buscar apostas:", error);
     }
   });
-
+  
+  // Buscar dados ao carregar o componente
   useEffect(() => {
     if (user && token && !hasFetchedRef.current) {
       hasFetchedRef.current = true;
@@ -78,27 +82,34 @@ function Dashboard() {
     }
   }, [user, token]);
 
+  // Função para registrar ou editar aposta
   async function registrarAposta() {
     if (!user) {
       alert("Você precisa estar logado para fazer uma aposta.");
       return;
     }
+
     if (!apostador.trim()) {
       alert("Digite o nome do apostador.");
       return;
     }
+
     if (!selectedDraw) {
       alert("Selecione um sorteio.");
       return;
     }
+
     if (!valor || isNaN(parseFloat(valor)) || parseFloat(valor) < 1) {
       alert("Digite um valor válido (mínimo R$ 1,00).");
       return;
     }
+
     if (tipoAposta !== "grupo" && (!numero || isNaN(parseInt(numero)))) {
       alert("Digite um número válido para o tipo de aposta.");
       return;
     }
+
+    // Registrar ou editar aposta
     try {
       const betData = {
         userId: user.id,
@@ -161,19 +172,16 @@ function Dashboard() {
           setApostas((apostasAtuais) => [...apostasAtuais, updatedBet.bet]);
           alert("Aposta registrada com sucesso!");
         }
-        // Limpar campos e sair do modo edição
+        // Resetar campos do formulário
         setValor("");
         setNumero("");
         setApostador("");
         setEditingBetId(null);
-        // Refetch para garantir dados atualizados
-        fetchApostas();
+        fetchApostas(); // Recarregar apostas
       } else {
         const errorData = await response.json();
         console.log("Error response:", errorData);
-        alert(
-          `Erro ao registrar aposta: ${errorData.message}`,
-        );
+        alert(`Erro ao registrar aposta: ${errorData.message}`);
       }
     } catch (error) {
       console.error(
@@ -184,6 +192,7 @@ function Dashboard() {
     }
   }
 
+  // Função para editar aposta
   function editarAposta(aposta) {
     setEditingBetId(aposta.id);
     setApostador(aposta.betor || "");
@@ -198,15 +207,15 @@ function Dashboard() {
     setValor((aposta.amount / 100).toString());
   }
 
+  // Função para deletar aposta
   async function deletarAposta(id) {
     if (!token) {
       alert("Você precisa estar logado para excluir uma aposta.");
       return;
     }
 
-    if (!window.confirm("Deseja realmente excluir esta aposta?")) {
+    if (!window.confirm("Deseja realmente excluir esta aposta?"))
       return;
-    }
 
     try {
       const response = await fetch(`http://localhost:3000/game/bet/${id}`, {
@@ -234,6 +243,7 @@ function Dashboard() {
   function maximizar() {
     setMaximizado(!maximizado);
   }
+  
   function trocaPagina(num) {
     setPages(num);
   }
@@ -246,6 +256,7 @@ function Dashboard() {
   function cancelLogout() {
     setShowLogoutModal(false);
   }
+
   return (
     <>
       <div

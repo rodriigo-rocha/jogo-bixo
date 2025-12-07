@@ -4,6 +4,7 @@ import type { DbInstance } from "../../plugins/db";
 import { type User, users } from "../../schema";
 import { GameService } from "../game/game.service";
 
+// Serviço responsável por operações relacionadas aos usuários
 export class UserService {
   private gameService: GameService;
 
@@ -45,9 +46,7 @@ export class UserService {
       conditions.push(eq(users.role, filters.role));
     }
 
-    // Ordenação
-    const sortColumn =
-      filters?.sortBy === "balance" ? users.balance : users.username;
+    const sortColumn = filters?.sortBy === "balance" ? users.balance : users.username;
     const sortDirection = filters?.order === "asc" ? asc : desc;
 
     return await this.db.query.users.findMany({

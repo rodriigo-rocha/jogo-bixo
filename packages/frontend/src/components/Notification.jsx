@@ -1,12 +1,7 @@
-import {
-  AlertOctagon,
-  AlertTriangle,
-  CheckCircle,
-  Info,
-  X,
-} from "lucide-react";
+import { AlertOctagon, AlertTriangle, CheckCircle, Info, X} from "lucide-react";
 import { createContext, useCallback, useContext, useState } from "react";
 
+// Estilos inspirados no Windows 98
 const win98Styles = {
   window:
     "bg-[#c0c0c0] border-t-white border-l-white border-r-black border-b-black border-2 shadow-md",
@@ -17,6 +12,7 @@ const win98Styles = {
   content: "p-3 flex items-start gap-3 text-black font-sans text-sm",
 };
 
+// Ícones e títulos padrão para cada tipo de notificação
 const icons = {
   info: <Info size={24} className="text-blue-700" />,
   success: <CheckCircle size={24} className="text-green-700" />,
@@ -24,6 +20,7 @@ const icons = {
   error: <AlertOctagon size={24} className="text-red-600" />,
 };
 
+// Títulos padrão para cada tipo de notificação
 const titles = {
   info: "Informação",
   success: "Sucesso",
@@ -31,24 +28,25 @@ const titles = {
   error: "Erro Crítico",
 };
 
+// Criação do contexto de notificações
 const NotificationContext = createContext();
 
+// Hook personalizado para usar o contexto de notificações
 export const useNotification = () => {
   const context = useContext(NotificationContext);
-  if (!context) {
-    throw new Error(
-      "useNotification deve ser usado dentro de um NotificationProvider",
-    );
-  }
+  if (!context)
+    throw new Error("useNotification deve ser usado dentro de um NotificationProvider");
+
   return context;
 };
 
+// Componente Toast individual para cada notificação
 const Toast = ({ id, type, title, message, onClose }) => {
   const [isClosing, setIsClosing] = useState(false);
 
   const handleClose = () => {
     setIsClosing(true);
-    setTimeout(() => onClose(id), 200); // Espera animação terminar
+    setTimeout(() => onClose(id), 200);
   };
 
   return (
@@ -86,21 +84,25 @@ const Toast = ({ id, type, title, message, onClose }) => {
   );
 };
 
+// Provedor de Notificações que gerencia o estado e exibição dos toasts
 export const NotificationProvider = ({ children }) => {
   const [notifications, setNotifications] = useState([]);
 
+  // Função para remover uma notificação pelo ID
   const removeNotification = useCallback((id) => {
     setNotifications((prev) =>
       prev.filter((notification) => notification.id !== id),
     );
   }, []);
 
+  // Função para adicionar uma nova notificação
   const addNotification = useCallback(
     (type, message, title = null, duration = 5000) => {
       const id = Date.now() + Math.random();
-
+      
       setNotifications((prev) => [...prev, { id, type, message, title }]);
 
+      // Remover a notificação após a duração especificada
       if (duration) {
         setTimeout(() => {
           removeNotification(id);

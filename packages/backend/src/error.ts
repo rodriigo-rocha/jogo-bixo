@@ -1,13 +1,13 @@
+// Definição de erros HTTP personalizados
+
 export class BaseHttpError extends Error {
   public status: number;
-
-  constructor(status: number, message: string) {
+  constructor(status: number, message: string) { 
     super(message);
     this.status = status;
     this.name = this.constructor.name;
   }
 }
-
 export class BadRequestError extends BaseHttpError {
   constructor(message: string = "Requisição inválida") {
     super(400, message);
