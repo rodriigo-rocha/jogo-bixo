@@ -6,6 +6,7 @@ export function AuthProvider({ children }) {
   const [user, setUser] = useState(null); // Estado para armazenar os dados do usuário
   const [token, setToken] = useState(localStorage.getItem("token")); // Estado para armazenar o token de autenticação
 
+  // Carregar dados do usuário do localStorage ao montar o componente
   useEffect(() => {
     const storedUser = localStorage.getItem("user"); // Buscar dados do usuário do localStorage
     if (storedUser) // Verificar se há dados armazenados

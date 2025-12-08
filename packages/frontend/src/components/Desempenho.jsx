@@ -49,6 +49,7 @@ function Desempenho() {
     }
   }, [token]);
 
+  // Buscar estatísticas dos sorteios ao carregar o componente
   useEffect(() => {
     fetchDrawsStats();
     fetchOpenDrawsStats();
@@ -62,6 +63,7 @@ function Desempenho() {
     return () => clearInterval(interval);
   }, [fetchDrawsStats, fetchOpenDrawsStats]);
 
+  // Buscar dados de desempenho quando o mês selecionado mudar
   useEffect(() => {
     if (selectedMonth && token) {
       fetch(`http://localhost:3000/performance?month=${selectedMonth}`, {

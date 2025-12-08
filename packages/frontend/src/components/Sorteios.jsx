@@ -8,6 +8,7 @@ function Sorteios({ draws, fetchDraws }) {
   const [identifier, setIdentifier] = useState("");
   const [loading, setLoading] = useState(false);
 
+  // Buscar sorteios ao carregar o componente
   useEffect(() => {
     fetchDraws();
   }, [fetchDraws]);
@@ -16,6 +17,7 @@ function Sorteios({ draws, fetchDraws }) {
     setPages(num);
   }
 
+  // Função para registrar um novo sorteio
   async function registrarSorteio() {
     if (!token || !identifier.trim()) {
       alert("Por favor, insira um identificador válido");
@@ -53,7 +55,10 @@ function Sorteios({ draws, fetchDraws }) {
     }
   }
 
+  // Filtrar sorteios com base na página selecionada
   const safeDraws = Array.isArray(draws) ? draws : [];
+
+  // Filtra os sorteios conforme a aba selecionada
   const filteredDraws = safeDraws.filter((draw) => {
     if (pages === 0) return true;
     if (pages === 1) return draw.status === "OPEN";
