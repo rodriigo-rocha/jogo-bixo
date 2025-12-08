@@ -8,7 +8,7 @@ import { authRoutes } from "./features/auth/auth.route";
 import { AuthService } from "./features/auth/auth.service";
 import { gameRoutes } from "./features/game/game.routes";
 import { performanceRoutes } from "./features/performance/performance.route";
-import { simulationCron } from "./features/simulation/simulation.cron";
+// import { simulationCron } from "./features/simulation/simulation.cron"; // Importa o cron de simulação
 import { userRoutes } from "./features/users/users.route";
 import { UserService } from "./features/users/users.service";
 import { db, dbPlugin } from "./plugins/db";
@@ -20,7 +20,7 @@ const app = new Elysia({ adapter: node() });
   try {
     const userService = new UserService(db);
     const authService = new AuthService(userService);
-    authService.ensureDefaultAdmin();
+    await authService.ensureDefaultAdmin();
   } catch (e) {
     console.error("Erro ao rodar seed de admin:", e);
   }
@@ -59,7 +59,7 @@ app
     };
   })
   .use(cors())
-  .use(
+  .use( 
     openapi({
       documentation: {
         info: {
@@ -94,7 +94,7 @@ app
   .use(authRoutes)
   .use(gameRoutes)
   .use(performanceRoutes)
-  // .use(simulationCron)
+  // .use(simulationCron) // Plugin de simulação
   .get(
     "/",
     () => ({

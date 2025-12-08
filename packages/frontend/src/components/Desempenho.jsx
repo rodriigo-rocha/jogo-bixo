@@ -11,36 +11,36 @@ function Desempenho() {
   const [openDraws, setOpenDraws] = useState(0);
   const [openDrawsStats, setOpenDrawsStats] = useState({ totalBets: 0, totalValue: 0 });
 
+  // Função para buscar estatísticas dos sorteios
   const fetchDrawsStats = useCallback(async () => {
     if (!token) return;
+
     try {
       const response = await fetch("http://localhost:3000/game/results", {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+        headers: {Authorization: `Bearer ${token}`},
       });
       if (response.ok) {
         const draws = await response.json();
-        setTotalDraws(draws.length);
-        setOpenDraws(draws.filter((draw) => draw.status === "OPEN").length);
+        setTotalDraws(draws.length); // Total de sorteios
+        setOpenDraws(draws.filter((draw) => draw.status === "OPEN").length); // Contar apenas os sorteios abertos
       }
     } catch (error) {
       console.error("Erro ao buscar estatísticas dos sorteios:", error);
     }
   }, [token]);
 
+  // Função para buscar estatísticas dos sorteios abertos
   const fetchOpenDrawsStats = useCallback(async () => {
     if (!token) return;
+
     try {
       const response = await fetch("http://localhost:3000/performance/open", {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+        headers: {Authorization: `Bearer ${token}`},
       });
       if (response.ok) {
         const stats = await response.json();
         console.log("Open draws stats:", stats);
-        setOpenDrawsStats(stats);
+        setOpenDrawsStats(stats); // Atualiza as estatísticas dos sorteios abertos
       } else {
         console.log("Response not ok:", response.status);
       }
@@ -65,34 +65,33 @@ function Desempenho() {
   useEffect(() => {
     if (selectedMonth && token) {
       fetch(`http://localhost:3000/performance?month=${selectedMonth}`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+        headers: {Authorization: `Bearer ${token}`},
       })
         .then((res) => res.json())
         .then((data) => {
-          console.log("Dados recebidos da API:", data); // Adicionado para depuração
+          console.log("Dados recebidos da API:", data);
           if (data.performance) {
             setPerformanceData(data.performance);
-            const processedChartData = data.dailyPerformance.map((item) => ({
+            const processedChartData = data.dailyPerformance.map((item) => ({ // Processar os dados do gráfico
               ...item,
               day: parseInt(item.day, 10),
               value: item.value / 100,
             }));
-            setChartData(processedChartData);
+            setChartData(processedChartData); // Atualizar os dados do gráfico
           } else {
-            setPerformanceData({ totalValue: 0, totalBets: 0 });
+            setPerformanceData({ totalValue: 0, totalBets: 0 }); // Definir valores padrão, se não houver dados
             setChartData([]);
           }
         })
         .catch((err) => {
-          console.error("Erro ao buscar dados de performance:", err); // Adicionado para depuração
+          console.error("Erro ao buscar dados de performance:", err);
           setPerformanceData({ totalValue: 0, totalBets: 0 });
           setChartData([]);
         });
     }
   }, [selectedMonth, token]);
 
+  // Função para formatar valores monetários
   const formatCurrency = (value) => {
     return (value || 0).toLocaleString("pt-BR", {
       style: "currency",

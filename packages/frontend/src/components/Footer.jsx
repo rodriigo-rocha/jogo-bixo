@@ -12,6 +12,7 @@ function Footer() {
   const [videoUrl, setVideoUrl] = useState("");
   const [videoTitle, setVideoTitle] = useState("");
 
+  // Atualiza o horário a cada segundo
   useEffect(() => {
     const timer = setInterval(() => {
       setCurrentTime(new Date());
@@ -20,6 +21,7 @@ function Footer() {
     return () => clearInterval(timer);
   }, []);
 
+  // Busca o clima ao montar o componente e a cada 30 minutos
   useEffect(() => {
     const fetchWeather = async () => {
       try {
@@ -28,7 +30,7 @@ function Footer() {
         ); // WeatherAPI de SP pegando como exemplo
 
         if (response.ok) {
-          const data = await response.json();
+          const data = await response.json(); // Converte a resposta em JSON
           setWeather({
             temp: Math.round(data.current.temp_c),
             condition: data.current.condition.text,
@@ -37,7 +39,7 @@ function Footer() {
         } else {
           console.log("API de clima não disponível, usando dados simulados");
           setWeather({
-            temp: Math.floor(Math.random() * 15) + 20, // Temperatura entre 20-35°C
+            temp: Math.floor(Math.random() * 15) + 20,
             condition: [
               "Ensolarado",
               "Nublado",
@@ -61,13 +63,14 @@ function Footer() {
         });
       }
     };
-
+    
     fetchWeather();
     const weatherTimer = setInterval(fetchWeather, 30 * 60 * 1000); // Att a cada meia hora
 
     return () => clearInterval(weatherTimer);
   }, []);
 
+  // Formata a data para o formato brasileiro
   const formatDate = (date) => {
     return date.toLocaleDateString("pt-BR", {
       weekday: "long",
@@ -77,6 +80,7 @@ function Footer() {
     });
   };
 
+  // Formata o horário para o formato brasileiro
   const formatTime = (date) => {
     return date.toLocaleTimeString("pt-BR", {
       hour: "2-digit",
@@ -89,7 +93,7 @@ function Footer() {
     setShowMenu(!showMenu);
   };
 
-  const handleGalinhaDinossauro = () => {
+  const handleMangas = () => {
     window.open("http://www.republiquedesmangues.fr/", "_blank", "noopener");
     setShowMenu(false);
   };
@@ -100,20 +104,12 @@ function Footer() {
   };
 
   const handleHarleyDavidson = () => {
-    window.open(
-      "https://www.harley-davidson.com/br/pt/index.html",
-      "_blank",
-      "noopener",
-    );
+    window.open("https://www.harley-davidson.com/br/pt/index.html", "_blank", "noopener");
     setShowMenu(false);
   };
 
   const handleLionelMessi = () => {
-    window.open(
-      "https://www.lionelofficialwines.com/?v=dc634e207282",
-      "_blank",
-      "noopener",
-    );
+    window.open("https://www.lionelofficialwines.com/?v=dc634e207282", "_blank", "noopener");
     setShowMenu(false);
   };
 
@@ -151,7 +147,7 @@ function Footer() {
         <div className="absolute bottom-full left-5 bg-gray-200 border border-gray-400 shadow-lg z-50">
           <div
             className="p-2 cursor-pointer hover:bg-gray-300"
-            onClick={handleGalinhaDinossauro}
+            onClick={handleMangas}
           >
             Você gosta de mangas? 🥭
           </div>

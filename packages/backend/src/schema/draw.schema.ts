@@ -1,5 +1,6 @@
 import { integer, real, sqliteTable, text } from "drizzle-orm/sqlite-core";
 
+// Tabela de sorteios do jogo
 export const draws = sqliteTable("draws", {
   id: text("id").primaryKey(),
   number: text("number").notNull(),

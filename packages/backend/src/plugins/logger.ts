@@ -3,13 +3,9 @@ import chalk from "chalk";
 import Elysia from "elysia";
 import type { Logger as PinoLogger } from "pino";
 import pino from "pino";
-import {
-  formatDuration,
-  formatLevel,
-  formatSize,
-  formatTime,
-} from "../helpers/formatters";
+import { formatDuration, formatLevel, formatSize, formatTime } from "../helpers/formatters";
 
+// Cria uma instância do Pino com formatação customizada para logs
 function createPinoInstance(): PinoLogger {
   const prettyStream = new Writable({
     write(chunk, _encoding, callback) {
@@ -22,6 +18,7 @@ function createPinoInstance(): PinoLogger {
         return callback();
       }
 
+      // Formatação customizada baseada no tipo de log
       if (log.type === "request") {
         const { level, time, method, path, status, durationNs, sizeBytes } =
           log;
@@ -34,7 +31,7 @@ function createPinoInstance(): PinoLogger {
               : status >= 300
                 ? chalk.cyan
                 : chalk.green;
-
+        
         const logString = [
           formatTime(time),
           formatLevel(level),
@@ -44,11 +41,12 @@ function createPinoInstance(): PinoLogger {
           formatSize(sizeBytes),
           statusColor(status),
         ].join(" ");
-
+        
         process.stdout.write(`${logString}\n`);
       } else if (log.type === "error") {
         const { level, time, method, path, status, durationNs, err } = log;
-
+        
+        // Formatação especial para erros
         const logString = [
           formatTime(time),
           formatLevel(level),
@@ -77,7 +75,7 @@ function createPinoInstance(): PinoLogger {
       callback();
     },
   });
-
+  
   return pino({ level: "info" }, prettyStream);
 }
 
@@ -87,6 +85,7 @@ interface StoreData {
 
 export const logger = createPinoInstance();
 
+// Plugin do logger para Elysia para registrar requisições e erros
 export const loggerPlugin = new Elysia({ name: "logger" })
   .decorate("logger", logger)
   .onStart(() => {

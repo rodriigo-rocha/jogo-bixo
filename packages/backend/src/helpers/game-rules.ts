@@ -1,6 +1,6 @@
 // Retorna o Grupo (1-25) baseado em uma DEZENA (00-99)
 export const getAnimalGroup = (dezena: number): number => {
-  if (dezena === 0) return 25; // Vaca
+  if (dezena === 0) return 25;
   return Math.ceil(dezena / 4);
 };
 
@@ -47,21 +47,17 @@ export const checkVictory = (
   const firstPrizeMilhar = parseInt(drawnNumber, 10);
   const firstPrizeGroup = getAnimalGroup(firstPrizeDezena);
 
-  if (type === "MILHAR") {
+  if (type === "MILHAR")
     return selection === firstPrizeMilhar;
-  }
 
-  if (type === "CENTENA") {
+  if (type === "CENTENA")
     return selection === firstPrizeCentena;
-  }
 
-  if (type === "DEZENA") {
+  if (type === "DEZENA")
     return selection === firstPrizeDezena;
-  }
 
-  if (type === "GRUPO") {
+  if (type === "GRUPO")
     return selection === firstPrizeGroup;
-  }
 
   return false;
 };

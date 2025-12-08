@@ -55,6 +55,7 @@ function Apostas({
     if (dezena === 0) return 25;
     return Math.ceil(dezena / 4);
   };
+  
   return (
     <div className="p-4 text-center text-3xl overflow-y-auto max-h-[83.5dvh] flex-col lg:flex justify-center lg:justify-between flex-wrap px-[5%] py-[5%]">
       <div className="pb-4 mb-5 lg:mb-0 bg-blue-200 lg:w-[40%] text-start border-4 border-gray-400 shadow-lg shadow-gray-400/70">

@@ -12,23 +12,20 @@ export const userRoutes = new Elysia({
   .use(loggerPlugin)
   .use(dbPlugin)
   .use(authPlugin)
-  .derive(({ db }) => {
+  .derive(({ db }) => { // Injetando UserService nas rotas
     const userService = new UserService(db);
 
-    return {
-      userService,
-    };
+    return { userService };
   })
-  .get(
-    "/me",
-    async ({ user, userService, set }) => {
-      const dbUser = await userService.findById(user!.id);
+  .get( "/me", async ({ user, userService, set }) => { // Verifica se o usuário está autenticado
+      const dbUser = await userService.findById(user!.id); // Busca o usuário no banco de dados
 
       if (!dbUser) {
         set.status = 401;
         return { message: "Não autorizado" };
       }
 
+      // Retorna os dados do usuário (excluindo informações sensíveis)
       return {
         id: dbUser!.id,
         username: dbUser!.username,
@@ -39,8 +36,8 @@ export const userRoutes = new Elysia({
       };
     },
     {
-      verifyAuth: true,
-      detail: {
+      verifyAuth: true, // Garante que a rota exige autenticação
+      detail: { // Documentação OpenAPI para a rota /users/me
         description: "Retorna informações sobre o usuário atual",
         responses: {
           "200": {
@@ -58,9 +55,7 @@ export const userRoutes = new Elysia({
             },
           },
 
-          "401": {
-            description: "Token inválido ou não fornecido",
-          },
+          "401": { description: "Token inválido ou não fornecido" },
         },
         security: [{ bearerAuth: [] }],
       },

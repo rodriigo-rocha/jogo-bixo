@@ -3,6 +3,7 @@ import { integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
 import { draws } from "./draw.schema";
 import { users } from "./user.schema";
 
+// Tabela de apostas feitas pelos usuários
 export const bets = sqliteTable("bets", {
   id: text("id").primaryKey(),
   userId: text("user_id")

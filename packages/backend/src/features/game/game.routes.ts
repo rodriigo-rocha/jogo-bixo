@@ -1,10 +1,10 @@
 import { cron, Patterns } from "@elysiajs/cron";
-import chalk from "chalk";
+// import chalk from "chalk";
 import { Elysia, t } from "elysia";
-import { intToDecimal } from "../../helpers/formatters";
+// import { intToDecimal } from "../../helpers/formatters";
 import { authPlugin } from "../../plugins/auth";
 import { db, dbPlugin } from "../../plugins/db";
-import { logger } from "../../plugins/logger";
+// import { logger } from "../../plugins/logger";
 import { permPlugin } from "../../plugins/permission";
 import type { BetsStatus } from "../../schema";
 import { GameService } from "./game.service";
@@ -36,9 +36,8 @@ export const gameRoutes = new Elysia({
     }),
   )
 
-  .get(
-    "/results",
-    async ({ gameService }) => {
+  // Public: Obter próximos sorteios
+  .get("/results", async ({ gameService }) => {
       return await gameService.getLatestDraws();
     },
     {
@@ -46,9 +45,8 @@ export const gameRoutes = new Elysia({
     },
   )
 
-  .post(
-    "/bet",
-    async ({ user, body, gameService }) => {
+  // Authenticated: Realizar Aposta
+  .post("/bet", async ({ user, body, gameService }) => {
       const bet = await gameService.placeBet(user!.id, body);
       return { success: true, bet };
     },
@@ -68,9 +66,8 @@ export const gameRoutes = new Elysia({
     },
   )
 
-  .put(
-    "/bet/:id",
-    async ({ user, params, body, gameService }) => {
+  // Authenticated: Editar Aposta
+  .put("/bet/:id", async ({ user, params, body, gameService }) => {
       const bet = await gameService.updateBet(user!.id, params.id, body);
       return { success: true, bet };
     },
@@ -89,9 +86,8 @@ export const gameRoutes = new Elysia({
     },
   )
 
-  .delete(
-    "/bet/:id",
-    async ({ user, params, gameService }) => {
+  // Authenticated: Excluir Aposta
+  .delete("/bet/:id", async ({ user, params, gameService }) => {
       return await gameService.deleteBet(user!.id, params.id);
     },
     {
@@ -104,9 +100,8 @@ export const gameRoutes = new Elysia({
     },
   )
 
-  .get(
-    "/my-bets",
-    async ({ user, gameService, query }) => {
+  // Authenticated: Minhas Apostas
+  .get("/my-bets", async ({ user, gameService, query }) => {
       return await gameService.getUserBets(user!.id, query.page);
     },
     {
@@ -121,9 +116,8 @@ export const gameRoutes = new Elysia({
     },
   )
 
-  .get(
-    "/my-transactions",
-    async ({ user, gameService, query }) => {
+  // Authenticated: Meu Extrato Financeiro
+  .get("/my-transactions", async ({ user, gameService, query }) => {
       return await gameService.getUserTransactions(user!.id, query.page);
     },
     {
@@ -140,13 +134,12 @@ export const gameRoutes = new Elysia({
     },
   )
 
+  // Admin Routes
   .group("/admin", (app) =>
     app
       .use(permPlugin)
 
-      .post(
-        "/draw",
-        async ({ gameService }) => {
+      .post("/draw", async ({ gameService }) => {
           const result = await gameService.executeDraw();
           return { message: "Sorteio realizado!", data: result };
         },
@@ -156,9 +149,7 @@ export const gameRoutes = new Elysia({
         },
       )
 
-      .post(
-        "/draw/:id/execute",
-        async ({ params, gameService }) => {
+      .post("/draw/:id/execute", async ({ params, gameService }) => {
           const result = await gameService.executeSpecificDraw(params.id);
           return { message: "Sorteio realizado!", data: result };
         },
@@ -169,9 +160,7 @@ export const gameRoutes = new Elysia({
         },
       )
 
-      .post(
-        "/draw/open",
-        async ({ body, gameService }) => {
+      .post("/draw/open", async ({ body, gameService }) => {
           const draw = await gameService.createOpenDraw(body);
           return { success: true, draw };
         },
@@ -188,9 +177,7 @@ export const gameRoutes = new Elysia({
         },
       )
 
-      .put(
-        "/draw/:id",
-        async ({ params, body, gameService }) => {
+      .put("/draw/:id", async ({ params, body, gameService }) => {
           const draw = await gameService.updateDraw(params.id, body);
           return { success: true, draw };
         },
@@ -208,9 +195,7 @@ export const gameRoutes = new Elysia({
         },
       )
 
-      .delete(
-        "/draw/:id",
-        async ({ params, gameService }) => {
+      .delete("/draw/:id", async ({ params, gameService }) => {
           return await gameService.deleteDraw(params.id);
         },
         {
@@ -220,9 +205,7 @@ export const gameRoutes = new Elysia({
         },
       )
 
-      .get(
-        "/bets",
-        async ({ gameService, query }) => {
+      .get("/bets", async ({ gameService, query }) => {
           const filters = {
             status: query.status as BetsStatus,
             userId: query.userId,
@@ -250,10 +233,12 @@ export const gameRoutes = new Elysia({
         },
       )
 
-      .get(
-        "/transactions",
-        async ({ gameService, query }) => {
-          return await gameService.getAdminTransactions(query);
+      .get("/transactions", async ({ gameService, query }) => {
+          return await gameService.getAdminTransactions({
+            userId: query.userId,
+            type: query.type,
+            page: query.page!,
+          });
         },
         {
           isAdmin: true,

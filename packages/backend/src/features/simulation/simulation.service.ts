@@ -10,6 +10,7 @@ import { users, draws } from "../../schema";
 import { GameService } from "../game/game.service";
 import { UserService } from "../users/users.service";
 
+// Serviço para simulação de bots
 export class SimulationService {
   private gameService: GameService;
   private userService: UserService;
@@ -19,6 +20,7 @@ export class SimulationService {
     this.userService = new UserService(db);
   }
 
+  // Gera dados aleatórios para um bot
   private generateBotData() {
     const firstName = faker.person.firstName();
     const lastName = faker.person.lastName();
@@ -35,6 +37,7 @@ export class SimulationService {
     };
   }
 
+  // Garante que existam bots suficientes no sistema
   async ensureBots(count = 10) {
     const bots = await this.db.query.users.findMany({
       where: (u, { like }) => like(u.email, "%@simulacao.com"),
@@ -52,6 +55,7 @@ export class SimulationService {
     }
   }
 
+  // Simula uma aposta aleatória de um bot
   async simulateRandomBet() {
     const bots = await this.db.query.users.findMany({
       where: (u, { like }) => like(u.email, "%@simulacao.com"),
@@ -89,6 +93,7 @@ export class SimulationService {
       return;
     }
 
+    // Escolher o primeiro sorteio aberto (poderia ser aleatório também)
     const drawId = openDraws[0].id;
 
     const types = ["GRUPO", "DEZENA", "MILHAR"] as const;
@@ -97,6 +102,7 @@ export class SimulationService {
     let selection = 0;
     let amount = 0;
 
+    // Definir seleção e valor baseado no tipo
     if (selectedType === "GRUPO") {
       selection = Math.floor(Math.random() * 25) + 1; // 1 a 25
       amount = [2, 3, 5, 10][Math.floor(Math.random() * 4)]; // R$ 2, 3, 5 ou 10
@@ -104,12 +110,11 @@ export class SimulationService {
       selection = Math.floor(Math.random() * 100); // 0 a 99
       amount = [1, 2, 3][Math.floor(Math.random() * 3)]; // R$ 1, 2, 3
     } else {
-      // MILHAR
       selection = Math.floor(Math.random() * 10000); // 0 a 9999
       amount = 1; // R$ 1,00
     }
 
-    try {
+    try { // Tenta fazer a aposta
       const betData = CreateBetSchema.parse({
         drawId,
         betor: randomBot.username,
