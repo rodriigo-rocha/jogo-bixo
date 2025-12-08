@@ -204,7 +204,7 @@ export const gameRoutes = new Elysia({
           detail: { summary: "Excluir Sorteio (só se OPEN e sem apostas)" },
         },
       )
-
+      
       .get("/bets", async ({ gameService, query }) => {
           const filters = {
             status: query.status as BetsStatus,

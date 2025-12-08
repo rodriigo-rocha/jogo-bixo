@@ -61,8 +61,10 @@ export class GameService {
     const user = await this.db.query.users.findFirst({
       where: eq(users.id, userId),
     });
+
     if (!user) 
-      throw new NotFoundError("User not found");
+      throw new NotFoundError("Usuário não encontrado");
+
     if (user.balance < data.amount * 100)
       throw new BadRequestError("Saldo insuficiente");
 
@@ -70,8 +72,10 @@ export class GameService {
     const draw = await this.db.query.draws.findFirst({
       where: eq(draws.id, data.drawId),
     });
+
     if (!draw) 
       throw new NotFoundError("Sorteio não encontrado");
+
     if (draw.status !== "OPEN")
       throw new BadRequestError("Sorteio não está aberto para apostas");
 

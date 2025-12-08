@@ -58,7 +58,6 @@ function Dashboard() {
     try {
       const response = await fetch("http://localhost:3000/game/my-bets", {
         headers: {
-          // ADICIONANDO O HEADER DE AUTORIZAÇÃO
           Authorization: `Bearer ${token}`,
         },
       });

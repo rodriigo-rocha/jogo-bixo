@@ -24,7 +24,7 @@ function Login({ onClose }) {
 
     if (isRegistering) {
       if (password !== passwordConfirm) {
-        addNotification("error", "Senhas não coencidem", "Erro ao registrar");
+        addNotification("error", "Senhas não coincidem", "Erro ao registrar");
         return;
       }
     }
